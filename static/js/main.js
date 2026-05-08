@@ -179,6 +179,9 @@ function renderTablaNL(resultados, metodo) {
         thead.innerHTML = `<th>It</th><th>Ci</th><th>g(Ci)</th><th>Er%</th>`;
         tbody.innerHTML = resultados.map(r => `<tr><td>${r.iter}</td><td>${r.ci}</td><td>${r.gci}</td><td>${r.error}</td></tr>`).join('');
     }
+
+    // Animación de fluidez para la tabla
+    if (window.animarTabla) window.animarTabla('#tabla-nl');
 }
 
 function limpiarNL() {
@@ -207,11 +210,23 @@ function generarCamposCoeficientes() {
     
     for (let i = grado; i >= 0; i--) {
         container.innerHTML += `
-            <div class="input-group">
+            <div class="input-group" style="opacity: 0;">
                 <label style="color: var(--accent-blue); font-weight: 600; font-family: 'Fira Code', monospace;">a_${i}</label>
                 <input type="text" id="coef-${i}" class="input-control text-center">
             </div>
         `;
+    }
+
+    // Animación fluida de aparición
+    if (window.anime) {
+        anime({
+            targets: '#container-coefs .input-group',
+            scale: [0.9, 1],
+            opacity: [0, 1],
+            delay: anime.stagger(50),
+            duration: 500,
+            easing: 'easeOutBack'
+        });
     }
 }
 
@@ -330,6 +345,9 @@ function renderTablaPol(resultados, metodo, encabezados) {
         thead.innerHTML = `<tr>${encabezados.map(h => `<th>${h}</th>`).join('')}</tr>`;
         tbody.innerHTML = resultados.map(r => `<tr>${r.data.map(d => `<td>${d}</td>`).join('')}</tr>`).join('');
     }
+
+    // Animación de fluidez para la tabla
+    if (window.animarTabla) window.animarTabla('#tabla-pol');
 }
 
 function limpiarPol() {
@@ -358,7 +376,7 @@ function generarCamposSistemas() {
     
     for (let i = 1; i <= n; i++) {
         container.innerHTML += `
-            <div class="system-eq-card">
+            <div class="system-eq-card" style="opacity: 0;">
                 <div class="eq-row">
                     <span class="eq-label">f_${i}:</span>
                     <input type="text" id="sis-f-${i}" placeholder="Ecuación ${i} = 0" class="input-control">
@@ -369,6 +387,18 @@ function generarCamposSistemas() {
                 </div>
             </div>
         `;
+    }
+
+    // Animación fluida de aparición
+    if (window.anime) {
+        anime({
+            targets: '.system-eq-card',
+            translateX: [-10, 0],
+            opacity: [0, 1],
+            delay: anime.stagger(100),
+            duration: 600,
+            easing: 'easeOutExpo'
+        });
     }
 }
 
@@ -406,6 +436,9 @@ async function calcularSis() {
     tbody.innerHTML = data.resultados.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('');
     
     document.getElementById('btn-exportar-sis').disabled = false;
+
+    // Animación de fluidez para la tabla
+    if (window.animarTabla) window.animarTabla('#tabla-sis');
 }
 
 function limpiarSis() {

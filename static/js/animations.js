@@ -150,6 +150,50 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================================
+    // ANIMACIONES DE ENTRADA ESCALONADA (STAGGERED)
+    // =========================================================================
+    
+    // 1. Escalonar las tarjetas de los módulos si existen
+    if (document.querySelector('.module-card')) {
+        anime({
+            targets: '.module-card',
+            translateY: [30, 0],
+            opacity: [0, 1],
+            delay: anime.stagger(100, {start: 300}),
+            duration: 800,
+            easing: 'easeOutElastic(1, .8)'
+        });
+    }
+
+    // 2. Escalonar los inputs del formulario
+    if (document.querySelector('.input-group')) {
+        anime({
+            targets: '.input-group',
+            translateX: [-20, 0],
+            opacity: [0, 1],
+            delay: anime.stagger(80, {start: 400}),
+            duration: 600,
+            easing: 'easeOutExpo'
+        });
+    }
+
+    // 3. Escalonar las filas de la tabla cuando se generan
+    // Creamos una función global que se pueda llamar desde main.js después de renderizar resultados
+    window.animarTabla = function(selector) {
+        const rows = document.querySelectorAll(`${selector} tbody tr`);
+        if (rows.length > 0) {
+            anime({
+                targets: rows,
+                opacity: [0, 1],
+                translateX: [10, 0],
+                delay: anime.stagger(30),
+                duration: 400,
+                easing: 'easeOutQuad'
+            });
+        }
+    };
+
+    // =========================================================================
     // MODO OSCURO / MODO CLARO (Toggle con Anime.js)
     // =========================================================================
     const themeBtn = document.getElementById('theme-btn');

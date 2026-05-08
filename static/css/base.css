@@ -90,6 +90,12 @@ html.light {
 /* Reseteo básico de márgenes */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
 /* 2. BODY: Estilos base de la página */
 body {
     font-family: 'Inter', sans-serif;
@@ -171,11 +177,12 @@ body {
     box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(245, 158, 11, 0.05);
     position: relative;
     overflow: hidden;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .glass-panel:hover {
-    border-color: rgba(245, 158, 11, 0.18);
-    box-shadow: var(--shadow-lg), 0 0 30px rgba(245, 158, 11, 0.07);
+    border-color: rgba(245, 158, 11, 0.25);
+    box-shadow: var(--shadow-lg), 0 0 40px rgba(245, 158, 11, 0.1);
+    transform: translateY(-2px);
 }
 .glass-panel::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
@@ -187,21 +194,63 @@ body {
 .input-group { display: flex; flex-direction: column; gap: 8px; }
 .input-group label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
 .input-control {
-    background: var(--bg-input); border: 1px solid var(--border-light); border-radius: var(--radius-md);
-    padding: 12px 16px; font-family: 'Fira Code', monospace; font-size: 14px; color: var(--text-primary); transition: all 0.2s; width: 100%;
+    background: var(--bg-input); 
+    border: 1px solid var(--border-light); 
+    border-radius: var(--radius-md);
+    padding: 12px 16px; 
+    font-family: 'Fira Code', monospace; 
+    font-size: 14px; 
+    color: var(--text-primary); 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    width: 100%;
 }
-.input-control:focus { outline: none; border-color: var(--accent-primary); background: rgba(245, 158, 11, 0.03); box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12); }
+.input-control:hover {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: rgba(245, 158, 11, 0.02);
+}
+.input-control:focus { 
+    outline: none; 
+    border-color: var(--accent-primary); 
+    background: var(--bg-card); 
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1), var(--shadow-glow);
+    transform: translateY(-1px);
+}
 .input-control::placeholder { color: var(--text-muted); }
 select.input-control { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; padding-right: 2.5rem; }
 select.input-control option { background-color: var(--bg-card); color: var(--text-primary); font-family: 'Inter', sans-serif; }
 
 /* 7. BOTONES: Estilos para todos los botones del sistema */
 .form-actions { display: flex; gap: 12px; }
-.btn { border: none; border-radius: var(--radius-pill); padding: 12px 28px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn { 
+    border: none; 
+    border-radius: var(--radius-pill); 
+    padding: 12px 28px; 
+    font-family: 'Inter', sans-serif; 
+    font-size: 14px; 
+    font-weight: 600; 
+    color: white; 
+    cursor: pointer; 
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); 
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 8px; 
+    position: relative;
+    overflow: hidden;
+}
 .btn:active { transform: scale(0.96); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-primary { background: var(--gradient-primary); box-shadow: var(--shadow-glow); letter-spacing: 0.3px; }
-.btn-primary:hover:not(:disabled) { box-shadow: 0 0 30px rgba(245, 158, 11, 0.45), 0 0 60px rgba(124, 58, 237, 0.2); filter: brightness(1.08); transform: translateY(-1px); }
+
+.btn-primary { 
+    background: var(--gradient-primary); 
+    box-shadow: var(--shadow-glow); 
+    letter-spacing: 0.3px; 
+}
+.btn-primary:hover:not(:disabled) { 
+    box-shadow: 0 0 40px rgba(245, 158, 11, 0.5), 0 0 70px rgba(124, 58, 237, 0.25); 
+    filter: brightness(1.1); 
+    transform: translateY(-2px); 
+}
 .btn-danger { background: transparent; color: var(--color-error); border: 1px solid rgba(239, 68, 68, 0.3); }
 .btn-danger:hover:not(:disabled) { background: rgba(239, 68, 68, 0.08); border-color: var(--color-error); box-shadow: 0 0 15px rgba(239, 68, 68, 0.15); }
 .btn-success { background: rgba(16, 185, 129, 0.08); color: var(--color-success); border: 1px solid rgba(16, 185, 129, 0.3); }
@@ -212,7 +261,14 @@ select.input-control option { background-color: var(--bg-card); color: var(--tex
 .data-table { width: 100%; border-collapse: collapse; font-family: 'Fira Code', monospace; font-size: 13px; text-align: center; }
 .data-table th { background: var(--bg-table-header); color: var(--text-secondary); padding: 14px 16px; font-weight: 500; font-family: 'Inter', sans-serif; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid var(--border-light); }
 .data-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-table); color: var(--text-primary); }
-.data-table tbody tr:hover { background: var(--bg-hover); }
+.data-table tbody tr {
+    transition: all 0.3s ease;
+}
+.data-table tbody tr:hover { 
+    background: var(--bg-hover);
+    transform: translateX(4px);
+    box-shadow: inset 2px 0 0 var(--accent-primary);
+}
 .data-table tbody tr.separator-row td { background: var(--bg-hover); height: 2px; padding: 0; }
 
 /* 9. CONSOLA Y RESULTADOS: Estilos para la caja negra de texto y tarjetas de éxito */
