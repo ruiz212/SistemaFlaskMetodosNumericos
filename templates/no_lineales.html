@@ -70,5 +70,85 @@
             Exportar a Excel
         </button>
     </div>
+
+    <!-- ════════════════════════════════════════════════
+         SECCIÓN DE GRÁFICA — Se muestra tras calcular
+         ════════════════════════════════════════════════ -->
+    <div id="grafica-seccion" class="glass-panel mt-4 grafica-seccion" style="display:none;">
+
+        <!-- Cabecera del panel de gráfica -->
+        <div class="grafica-header">
+            <div class="grafica-title-row">
+                <span class="grafica-icon">
+                    <i class="ph-bold ph-chart-line-up"></i>
+                </span>
+                <h3 class="grafica-title">Visualización de la Función</h3>
+                <span class="iter-badge" id="grafica-iter-badge" title="Iteraciones graficadas">0</span>
+                <span class="iter-badge-label">iteraciones</span>
+            </div>
+            <div class="grafica-legend-row">
+                <span class="legend-dot" style="background:rgba(245,158,11,1)"></span><span>f(x)</span>
+                <span class="legend-dot" style="background:rgba(6,182,212,1)"></span><span>Iteraciones</span>
+                <span class="legend-dot legend-star" style="background:rgba(16,185,129,1)">★</span><span>Raíz</span>
+            </div>
+        </div>
+
+        <!-- Canvas wrapper -->
+        <div id="chart-wrapper" class="chart-wrapper">
+            <!-- Chart.js renderiza aquí -->
+        </div>
+
+        <!-- Pie del panel con info de la raíz -->
+        <div class="grafica-footer" id="grafica-footer">
+            <!-- Se llena dinámicamente -->
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js para la gráfica -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Módulo de gráfica animada -->
+<script src="{{ url_for('static', filename='js/grafica_nl.js') }}"></script>
+
+<script>
+// ── Sobreescribir calcularNL para llamar también a la gráfica ──────────────
+(function () {
+    const _calcularNLOriginal = window.calcularNL;
+
+    window.calcularNL = async function (force = false) {
+        await _calcularNLOriginal(force);
+
+        // Después del cálculo, solicitar la gráfica si hay resultado exitoso
+        const resultDiv = document.getElementById('resultado-nl');
+        if (resultDiv && resultDiv.classList.contains('success')) {
+            const ecuacion   = document.getElementById('ecuacion-nl').value;
+            const metodo     = document.getElementById('metodo-nl').value;
+            const angulo     = document.getElementById('angulo-nl')?.value ?? 'rad';
+            const resultados = window._lastResultadosNL || [];
+
+            await solicitarGraficaNL(ecuacion, metodo, resultados, angulo);
+
+            // Actualizar footer de la gráfica
+            const footerEl = document.getElementById('grafica-footer');
+            if (footerEl && window._lastRaiz) {
+                footerEl.innerHTML = `
+                    <div class="grafica-footer-inner">
+                        <span class="footer-label">Raíz encontrada</span>
+                        <span class="footer-value">${window._lastRaiz}</span>
+                        <span class="footer-method">${metodo}</span>
+                    </div>`;
+            }
+        }
+    };
+
+    // Limpiar también la gráfica
+    const _limpiarNLOriginal = window.limpiarNL;
+    window.limpiarNL = function () {
+        _limpiarNLOriginal();
+        limpiarGraficaNL();
+    };
+})();
+</script>
 {% endblock %}

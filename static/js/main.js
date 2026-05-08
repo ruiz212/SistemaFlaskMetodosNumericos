@@ -150,6 +150,11 @@ async function calcularNL(force = false) {
         return showAlert('Error', data.error, 'error');
     }
     
+    // Guardar datos para la gráfica
+    window._lastResultadosNL = data.resultados;
+    window._lastMetodoNL     = metodo;
+    window._lastRaiz         = data.mensaje;
+    
     renderTablaNL(data.resultados, metodo);
     const resultDiv = document.getElementById('resultado-nl');
     resultDiv.textContent = data.mensaje;

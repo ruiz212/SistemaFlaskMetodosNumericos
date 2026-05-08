@@ -10,10 +10,190 @@
     gap: 24px;
 }
 
-/* Puedes agregar estilos específicos para esta página aquí.
-   Por ejemplo, si quieres que la consola aquí tenga otro color: */
-/*
-.console-output {
-    color: var(--accent-pink);
+/* ════════════════════════════════════════════════════════════
+   PANEL DE GRÁFICA ANIMADA
+   ════════════════════════════════════════════════════════════ */
+
+.grafica-seccion {
+    /* Hereda glass-panel; añadimos sólo lo específico */
+    overflow: visible;
 }
-*/
+
+/* ── Cabecera ─────────────────────────────────────────────── */
+.grafica-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.grafica-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.grafica-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: var(--gradient-primary);
+    color: #fff;
+    font-size: 20px;
+    box-shadow: var(--shadow-glow);
+    flex-shrink: 0;
+}
+
+.grafica-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* Badge contador de iteraciones */
+.iter-badge {
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    min-width: 32px; height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(124,58,237,0.15));
+    border: 1px solid rgba(245,158,11,0.35);
+    color: var(--accent-primary);
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 0 0 12px rgba(245,158,11,0.15);
+    transition: all 0.3s;
+}
+
+.iter-badge-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+    margin-left: -4px;
+}
+
+/* Leyenda de colores */
+.grafica-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-family: 'Inter', sans-serif;
+    flex-wrap: wrap;
+}
+
+.legend-dot {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.legend-star {
+    border-radius: 0;
+    background: transparent !important;
+    color: rgba(16, 185, 129, 1);
+    font-size: 16px;
+    line-height: 1;
+    width: auto;
+    height: auto;
+}
+
+/* ── Canvas wrapper ───────────────────────────────────────── */
+.chart-wrapper {
+    position: relative;
+    width: 100%;
+    height: 420px;
+    border-radius: var(--radius-md);
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-table);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-wrapper canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Spinner de carga */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.chart-spinner {
+    width: 44px; height: 44px;
+    border: 3px solid rgba(245, 158, 11, 0.15);
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 0.85s linear infinite;
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+}
+
+/* ── Pie del panel ────────────────────────────────────────── */
+.grafica-footer {
+    margin-top: 16px;
+}
+
+.grafica-footer-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: rgba(16, 185, 129, 0.07);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: var(--radius-md);
+    flex-wrap: wrap;
+}
+
+.footer-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-success);
+    letter-spacing: 0.5px;
+}
+
+.footer-value {
+    font-family: 'Fira Code', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-success);
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
+}
+
+.footer-method {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+    font-family: 'Inter', sans-serif;
+}
+
+/* ── Light mode overrides ─────────────────────────────────── */
+html.light .chart-wrapper {
+    background: rgba(245, 245, 245, 0.5);
+    border-color: rgba(0,0,0,0.07);
+}
+
+html.light .grafica-footer-inner {
+    background: rgba(16, 185, 129, 0.06);
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .chart-wrapper { height: 300px; }
+    .grafica-header { flex-direction: column; align-items: flex-start; }
+}

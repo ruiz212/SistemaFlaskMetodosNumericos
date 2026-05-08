@@ -9,6 +9,7 @@ from metodos.muller import metodo_muller
 from metodos.bairstow import metodo_bairstow
 from metodos.horner_newton import metodo_horner_newton
 from metodos.sistemas import resolver_sistema_no_lineal
+from metodos.grafica_nl import generar_datos_grafica
 
 app = Flask(__name__)
 
@@ -92,6 +93,25 @@ def calcular_nl():
         return jsonify({'error': f"Error en los valores de entrada: {ve}"})
     except Exception as e:
         return jsonify({'error': f"Error inesperado: {str(e)}"})
+
+@app.route('/api/grafica_nl', methods=['POST'])
+def grafica_nl():
+    data = request.json
+    ecuacion = data.get('ecuacion', '').strip()
+    metodo   = data.get('metodo', '')
+    resultados = data.get('resultados', [])
+    modo_angulo = data.get('angulo', 'rad')
+
+    if not ecuacion:
+        return jsonify({'error': 'Ingresa una ecuación para graficar.'})
+    
+    try:
+        datos = generar_datos_grafica(ecuacion, metodo, resultados, modo_angulo)
+        if 'error' in datos:
+            return jsonify({'error': datos['error']})
+        return jsonify({'success': True, 'datos': datos})
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 # =========================================================================
 # API: POLINOMIOS (RAÍCES COMPLEJAS)
