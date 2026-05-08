@@ -1,0 +1,22 @@
+/* ==========================================================================
+   POLINOMIOS.CSS
+   Aplica exclusivamente a polinomios.html (Raíces Complejas).
+   Controla la generación dinámica de coeficientes.
+   ========================================================================== */
+
+/* Cuadrícula dinámica para alinear los inputs de los coeficientes a_n hasta a_0 */
+.dynamic-grid {
+    display: grid;
+    /* Crea tantas columnas de mínimo 120px como quepan en la fila */
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 20px;
+}
+
+/* Layout para separar la tabla (izquierda) de la consola (derecha) */
+.grid-layout {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap; /* En pantallas pequeñas se pone uno debajo del otro */
+}
+
+/* Puedes agregar más estilos específicos de polinomios aquí */

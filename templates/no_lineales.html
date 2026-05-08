@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/no_lineales.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-container fade-in">
+    <h2 class="page-title">Buscador de Raíces (Funciones)</h2>
+    
+    <div class="glass-panel form-panel">
+        <div class="form-row">
+            <div class="input-group flex-2">
+                <label>Ecuación f(x):</label>
+                <input type="text" id="ecuacion-nl" placeholder="Ej: x**3 - 3.5*x**2 + 2.75*x - 0.5" class="input-control">
+            </div>
+            <div class="input-group">
+                <label>Método:</label>
+                <select id="metodo-nl" class="input-control" onchange="actualizarCamposNL()">
+                    <option value="Bisección">Bisección</option>
+                    <option value="Regla Falsa">Regla Falsa</option>
+                    <option value="Newton-Raphson">Newton-Raphson</option>
+                    <option value="Secante">Secante</option>
+                    <option value="Punto fijo">Punto fijo</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Ángulos:</label>
+                <select id="angulo-nl" class="input-control">
+                    <option value="rad">Radianes</option>
+                    <option value="deg">Grados</option>
+                </select>
+            </div>
+            <div class="input-group flex-1">
+                <label>Tol (%):</label>
+                <input type="text" id="tol-nl" placeholder="Ej: 0.01" class="input-control">
+            </div>
+        </div>
+
+        <div class="form-row mt-3" id="campos-dinamicos-nl">
+            <!-- Se llena dinámicamente -->
+        </div>
+
+        <div class="form-actions mt-4">
+            <button class="btn btn-primary" onclick="calcularNL()">Calcular</button>
+            <button class="btn btn-danger" onclick="limpiarNL()">Limpiar</button>
+        </div>
+    </div>
+
+    <div class="table-container glass-panel mt-4">
+        <div class="table-responsive">
+            <table id="tabla-nl" class="data-table">
+                <thead>
+                    <tr id="thead-nl">
+                        <!-- Headers dinámicos -->
+                    </tr>
+                </thead>
+                <tbody id="tbody-nl">
+                    <!-- Resultados -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="result-panel mt-4 flex-row">
+        <div id="resultado-nl" class="resultado-tarjeta flex-3 text-center">
+            Esperando parámetros...
+        </div>
+        <button class="btn btn-success flex-1" id="btn-exportar-nl" disabled onclick="exportarExcel('tabla-nl', 'NoLineales')">
+            Exportar a Excel
+        </button>
+    </div>
+</div>
+{% endblock %}

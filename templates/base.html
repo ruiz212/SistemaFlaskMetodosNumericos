@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suite Numérica Pro</title>
+    <!-- Fuentes modernas -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+    <!-- Iconos Phosphor -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Anime JS global para transiciones -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <!-- Driver.js para tutoriales interactivos -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    {% block styles %}{% endblock %}
+    
+    <style>
+        /* Contenedor principal inicializado transparente para la animación de entrada de página */
+        .page-transition-wrapper {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+    </style>
+    
+    <script>
+        // Aplicar el tema inmediatamente para evitar parpadeos (FOUC)
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.classList.add(savedTheme);
+    </script>
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+        <div class="topbar-content">
+            <div class="brand">
+                <div class="brand-logo">
+                    <i class="ph-bold ph-sigma"></i>
+                </div>
+                <span class="brand-text">Suite Numérica</span>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="{{ url_for('index') }}" class="nav-item page-link {% if request.path == '/' %}active{% endif %}">
+                    <i class="ph ph-house"></i> Inicio
+                </a>
+                <a href="{{ url_for('no_lineales') }}" class="nav-item page-link {% if request.path == '/no-lineales' %}active{% endif %}">
+                    <i class="ph ph-chart-line-up"></i> Ecuaciones
+                </a>
+                <a href="{{ url_for('polinomios') }}" class="nav-item page-link {% if request.path == '/polinomios' %}active{% endif %}">
+                    <i class="ph ph-function"></i> Polinomios
+                </a>
+                <a href="{{ url_for('sistemas') }}" class="nav-item page-link {% if request.path == '/sistemas' %}active{% endif %}">
+                    <i class="ph ph-intersect"></i> Sistemas
+                </a>
+                
+                <div class="theme-toggle" id="theme-btn" style="cursor: pointer; margin-left: 16px; font-size: 20px; color: var(--text-primary); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; transition: background 0.3s;" title="Cambiar Tema">
+                    <i class="ph-fill ph-moon" id="theme-icon"></i>
+                </div>
+                
+                <div class="tutorial-toggle" id="tutorial-btn" style="cursor: pointer; margin-left: 8px; font-size: 20px; color: var(--text-primary); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; transition: background 0.3s;" title="Iniciar Tutorial">
+                    <i class="ph ph-question"></i>
+                </div>
+            </nav>
+
+            <div class="mobile-menu-btn" id="mobile-btn">
+                <i class="ph ph-list"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Wrapper para la transición de página -->
+    <main class="main-container page-transition-wrapper">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Contenedor dinámico para la animación de "Limpiar" (Papelera) -->
+    <div id="trash-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; overflow: hidden;"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <script src="{{ url_for('static', filename='js/animations.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tutorial.js') }}"></script>
+    
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-btn').addEventListener('click', function() {
+            document.querySelector('.nav-menu').classList.toggle('show');
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

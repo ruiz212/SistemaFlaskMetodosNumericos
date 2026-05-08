@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/polinomios.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-container fade-in">
+    <h2 class="page-title">Raíces Complejas (Polinomios)</h2>
+    
+    <div class="glass-panel form-panel">
+        <div class="form-row align-center">
+            <div class="input-group flex-1">
+                <label>Método:</label>
+                <select id="metodo-pol" class="input-control" onchange="actualizarCamposPol()">
+                    <option value="Bairstow">Bairstow</option>
+                    <option value="Müller">Müller</option>
+                    <option value="Horner-Newton">Horner-Newton</option>
+                </select>
+            </div>
+            <div class="input-group flex-1">
+                <label>Grado (n):</label>
+                <input type="number" id="grado-pol" value="3" min="1" max="20" class="input-control text-center" onchange="generarCamposCoeficientes()">
+            </div>
+            <div class="input-group flex-1">
+                <label>Tol (%):</label>
+                <input type="text" id="tol-pol" placeholder="Ej: 1" class="input-control">
+            </div>
+            <div class="form-actions mt-4 flex-2">
+                <button class="btn btn-primary" onclick="calcularPol()">Calcular</button>
+                <button class="btn btn-danger" onclick="limpiarPol()">Limpiar</button>
+            </div>
+        </div>
+
+        <div class="form-row mt-3" id="campos-dinamicos-pol">
+            <!-- Puntos iniciales para Müller u Horner-Newton -->
+        </div>
+
+        <div class="mt-4">
+            <label class="section-label">Coeficientes a_n → a_0:</label>
+            <div class="dynamic-grid" id="container-coefs" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));">
+                <!-- Se llenan dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-layout mt-4">
+        <div class="table-container glass-panel flex-2">
+            <label class="section-label">Tabla de Iteraciones:</label>
+            <div class="table-responsive">
+                <table id="tabla-pol" class="data-table">
+                    <thead id="thead-pol"></thead>
+                    <tbody id="tbody-pol"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="console-container glass-panel flex-1">
+            <label class="section-label">Registro y Raíces Finales:</label>
+            <textarea id="consola-pol" class="console-output" readonly></textarea>
+        </div>
+    </div>
+
+    <div class="result-panel mt-4 flex-row justify-end">
+        <button class="btn btn-success" id="btn-exportar-pol" disabled onclick="exportarExcel('tabla-pol', 'Polinomios')">
+            Exportar a Excel
+        </button>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+/* ==========================================================================
+   NO_LINEALES.CSS
+   Aplica exclusivamente a no_lineales.html (Ecuaciones No Lineales).
+   ========================================================================== */
+
+/* Grid principal para poner la tabla a la izquierda y resultados a la derecha */
+.results-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* La tabla ocupa 2/3, los resultados 1/3 */
+    gap: 24px;
+}
+
+/* Puedes agregar estilos específicos para esta página aquí.
+   Por ejemplo, si quieres que la consola aquí tenga otro color: */
+/*
+.console-output {
+    color: var(--accent-pink);
+}
+*/

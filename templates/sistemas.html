@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sistemas.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-container fade-in">
+    <h2 class="page-title">Sistemas No Lineales (Newton-Raphson Multivariable)</h2>
+    
+    <div class="glass-panel form-panel">
+        <div class="form-row align-center">
+            <div class="input-group flex-1">
+                <label>Variables (n):</label>
+                <input type="number" id="n-sis" value="2" min="2" max="10" class="input-control text-center" onchange="generarCamposSistemas()">
+            </div>
+            <div class="input-group flex-1">
+                <label>Ángulos:</label>
+                <select id="angulo-sis" class="input-control">
+                    <option value="rad">Radianes</option>
+                    <option value="deg">Grados</option>
+                </select>
+            </div>
+            <div class="input-group flex-1">
+                <label>Error (Tol):</label>
+                <input type="text" id="tol-sis" placeholder="Ej: 0.001" class="input-control">
+            </div>
+            <div class="input-group flex-1">
+                <label>Max Iter:</label>
+                <input type="number" id="iter-sis" placeholder="Ej: 50" class="input-control text-center">
+            </div>
+            <div class="form-actions mt-4 flex-2">
+                <button class="btn btn-primary" onclick="calcularSis()">Calcular</button>
+                <button class="btn btn-danger" onclick="limpiarSis()">Limpiar</button>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <label class="section-label">Definición de Funciones (f_i) y Valores Iniciales (x_i):</label>
+            <div class="dynamic-grid" id="container-sis">
+                <!-- Se llenan dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container glass-panel mt-4">
+        <label class="section-label">Tabla de Iteraciones:</label>
+        <div class="table-responsive">
+            <table id="tabla-sis" class="data-table">
+                <thead id="thead-sis"></thead>
+                <tbody id="tbody-sis"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="console-container glass-panel mt-4">
+        <label class="section-label">Registro y Solución:</label>
+        <textarea id="consola-sis" class="console-output" readonly></textarea>
+    </div>
+
+    <div class="result-panel mt-4 flex-row justify-end">
+        <button class="btn btn-success" id="btn-exportar-sis" disabled onclick="exportarExcel('tabla-sis', 'Sistemas')">
+            Exportar a Excel
+        </button>
+    </div>
+</div>
+{% endblock %}

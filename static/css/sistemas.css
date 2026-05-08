@@ -1,0 +1,43 @@
+/* ==========================================================================
+   SISTEMAS.CSS
+   Aplica exclusivamente a sistemas.html (Sistemas de Ecuaciones).
+   Controla las tarjetas donde se ingresan múltiples funciones f_x.
+   ========================================================================== */
+
+/* Tarjeta individual para ingresar la ecuación y su valor inicial */
+.system-eq-card {
+    background: rgba(0, 0, 0, 0.2); /* Fondo ligeramente más oscuro */
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color 0.2s;
+}
+
+/* Efecto al pasar el mouse por encima de la tarjeta de ecuación */
+.system-eq-card:hover { 
+    border-color: rgba(255,255,255,0.15); 
+}
+
+/* Fila para cada input dentro de la tarjeta */
+.eq-row { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+}
+
+/* Etiqueta de la ecuación (f_1, f_2) */
+.eq-label { 
+    font-family: 'Fira Code', monospace; 
+    font-size: 14px; 
+    color: var(--accent-blue); 
+    font-weight: 500; 
+    width: 40px; 
+}
+
+/* Etiqueta para el valor inicial (x_1, x_2) en color rosa */
+.eq-label.alt { 
+    color: var(--accent-pink); 
+}

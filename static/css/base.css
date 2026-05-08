@@ -1,0 +1,304 @@
+/* ==========================================================================
+   BASE.CSS
+   Este archivo se aplica a TODAS las páginas (está vinculado en base.html).
+   Contiene: Variables de color, fondo, menú superior, botones y estilos compartidos.
+   ========================================================================== */
+
+/* 1. VARIABLES GLOBALES — Paleta "Void Prism" */
+/* Inspirada en instrumentos matemáticos: oro, violeta profundo y fondo oscuro/void */
+:root {
+    /* ── Fondos ── */
+    --bg-page: #09090b;              /* Void ink */
+    --bg-topbar: rgba(9, 9, 11, 0.85);  /* Topbar intensa pero translúcida */
+    --bg-card: #111113;    /* Tarjetas oscuras con brillo sutil */
+    --bg-input: rgba(0, 0, 0, 0.5);    /* Inputs sólidos y legibles */
+    --bg-table-header: rgba(245, 158, 11, 0.05);
+    --bg-console: rgba(0, 0, 0, 0.7);  /* Consola con contraste suave */
+    --bg-hover: rgba(245, 158, 11, 0.05);
+
+    /* ── Bordes ── */
+    --border-light: rgba(245, 158, 11, 0.12);
+    --border-table: rgba(255, 255, 255, 0.05);
+    --border-focus: rgba(245, 158, 11, 0.55);
+
+    /* ── Tipografía ── */
+    --text-primary: #fafaf9;    /* Blanco nítido con toque cálido */
+    --text-secondary: #a8a29e;  /* Gris cálido */
+    --text-muted: #78716c;      /* Gris suave para ayudas */
+
+    /* ── Acentos principales ── */
+    --accent-primary: #f59e0b;   /* Gold */
+    --accent-secondary: #7c3aed; /* Violet */
+    --accent-highlight: #06b6d4; /* Cyan */
+
+    /* Aliases de compatibilidad con el código existente */
+    --accent-blue: #f59e0b;      /* Gold is the new primary blue */
+    --accent-indigo: #7c3aed;
+    --accent-pink: #06b6d4;
+
+    /* ── Gradientes ── */
+    --gradient-primary: linear-gradient(135deg, #f59e0b 0%, #7c3aed 100%);
+    --gradient-glow: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(124, 58, 237, 0.35));
+    --gradient-cyber: linear-gradient(135deg, #7c3aed 0%, #f59e0b 50%, #06b6d4 100%);
+
+    /* ── Feedback ── */
+    --color-error: #ef4444;
+    --color-success: #10b981;
+
+    /* ── Sombras ── */
+    --shadow-sm: 0 4px 9px -2px rgba(0, 0, 0, 0.18);
+    --shadow-lg: 0 24px 60px -18px rgba(0, 0, 0, 0.45);
+    --shadow-glow: 0 0 28px rgba(245, 158, 11, 0.2);
+    --shadow-violet: 0 0 28px rgba(124, 58, 237, 0.18);
+
+    /* ── Radios ── */
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-pill: 9999px;
+
+    --max-width: 1280px;
+}
+
+/* TEMA CLARO — Void Prism Light */
+html.light {
+    --bg-page: #fffbf5;             
+    --bg-topbar: rgba(255, 251, 245, 0.9);
+    --bg-card: #ffffff;
+    --bg-input: #fdfaf6;
+    --bg-table-header: rgba(245, 158, 11, 0.05);
+    --bg-console: #faf9f6;
+    --bg-hover: rgba(245, 158, 11, 0.06);
+
+    --border-light: rgba(245, 158, 11, 0.2);
+    --border-table: rgba(0, 0, 0, 0.05);
+
+    --text-primary: #1c1917;
+    --text-secondary: #57534e;
+    --text-muted: #a8a29e;
+
+    --shadow-sm: 0 4px 6px -1px rgba(245, 158, 11, 0.08);
+    --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+    --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.2);
+}
+
+::selection {
+    background: var(--accent-primary);
+    color: #020817;
+}
+
+/* Reseteo básico de márgenes */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* 2. BODY: Estilos base de la página */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-page);
+    background-image:
+        radial-gradient(ellipse at 15% 70%, rgba(245, 158, 11, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 85% 20%, rgba(124, 58, 237, 0.05) 0%, transparent 50%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+    transition: background-color 0.4s ease, color 0.4s ease;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 3. MENU SUPERIOR (Topbar): La barra de navegación fija arriba */
+.topbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 72px;
+    background: var(--bg-topbar);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-light);
+    z-index: 50;
+}
+.topbar-content {
+    max-width: var(--max-width); margin: 0 auto; padding: 0 24px;
+    height: 100%; display: flex; align-items: center; justify-content: space-between;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-logo { width: 40px; height: 40px; background: var(--gradient-primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; box-shadow: var(--shadow-glow); }
+.brand-text { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 22px; color: var(--text-primary); }
+.nav-menu { display: flex; gap: 8px; }
+.nav-item { text-decoration: none; color: var(--text-secondary); font-size: 14px; padding: 8px 16px; border-radius: var(--radius-pill); transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+.nav-item:hover { color: var(--text-primary); background: var(--bg-hover); }
+.nav-item.active { background: rgba(245, 158, 11, 0.15); color: var(--accent-primary) !important; border: 1px solid rgba(245, 158, 11, 0.3); box-shadow: 0 0 16px rgba(245, 158, 11, 0.2); }
+.mobile-menu-btn { display: none; font-size: 24px; color: var(--text-primary); cursor: pointer; }
+
+/* 4. CONTENEDOR PRINCIPAL Y UTILIDADES */
+.main-container { max-width: var(--max-width); margin: 96px auto 48px; padding: 0 24px; }
+.page-title { font-family: 'Outfit', sans-serif; font-size: 36px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
+.page-title::before { content: ''; display: block; width: 6px; height: 32px; background: var(--gradient-primary); border-radius: 4px; }
+.section-label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--accent-blue); margin-bottom: 16px; }
+
+.text-center { text-align: center; }
+.mt-3 { margin-top: 16px; } .mt-4 { margin-top: 24px; }
+.flex-row { display: flex; gap: 16px; flex-wrap: wrap; }
+.align-center { align-items: center; } .justify-end { justify-content: flex-end; }
+.flex-1 { flex: 1; } .flex-2 { flex: 2; } .flex-3 { flex: 3; }
+.fade-in { animation: fadeIn 0.5s ease-out forwards; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Cuadrículas Dinámicas Globales */
+.dynamic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+}
+
+.grid-layout {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+.grid-layout > * { flex: 1; min-width: 300px; }
+
+/* 5. TARJETAS DE CRISTAL (Glassmorphism): Contenedores semitransparentes */
+.glass-panel {
+    background: var(--bg-card);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(245, 158, 11, 0.05);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.glass-panel:hover {
+    border-color: rgba(245, 158, 11, 0.18);
+    box-shadow: var(--shadow-lg), 0 0 30px rgba(245, 158, 11, 0.07);
+}
+.glass-panel::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.2), transparent);
+}
+
+/* 6. FORMULARIOS E INPUTS: Estilo de las cajas de texto y selects */
+.form-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end; }
+.input-group { display: flex; flex-direction: column; gap: 8px; }
+.input-group label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+.input-control {
+    background: var(--bg-input); border: 1px solid var(--border-light); border-radius: var(--radius-md);
+    padding: 12px 16px; font-family: 'Fira Code', monospace; font-size: 14px; color: var(--text-primary); transition: all 0.2s; width: 100%;
+}
+.input-control:focus { outline: none; border-color: var(--accent-primary); background: rgba(245, 158, 11, 0.03); box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12); }
+.input-control::placeholder { color: var(--text-muted); }
+select.input-control { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; padding-right: 2.5rem; }
+select.input-control option { background-color: var(--bg-card); color: var(--text-primary); font-family: 'Inter', sans-serif; }
+
+/* 7. BOTONES: Estilos para todos los botones del sistema */
+.form-actions { display: flex; gap: 12px; }
+.btn { border: none; border-radius: var(--radius-pill); padding: 12px 28px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn:active { transform: scale(0.96); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: var(--gradient-primary); box-shadow: var(--shadow-glow); letter-spacing: 0.3px; }
+.btn-primary:hover:not(:disabled) { box-shadow: 0 0 30px rgba(245, 158, 11, 0.45), 0 0 60px rgba(124, 58, 237, 0.2); filter: brightness(1.08); transform: translateY(-1px); }
+.btn-danger { background: transparent; color: var(--color-error); border: 1px solid rgba(239, 68, 68, 0.3); }
+.btn-danger:hover:not(:disabled) { background: rgba(239, 68, 68, 0.08); border-color: var(--color-error); box-shadow: 0 0 15px rgba(239, 68, 68, 0.15); }
+.btn-success { background: rgba(16, 185, 129, 0.08); color: var(--color-success); border: 1px solid rgba(16, 185, 129, 0.3); }
+.btn-success:hover:not(:disabled) { background: rgba(16, 185, 129, 0.15); border-color: var(--color-success); box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+
+/* 8. TABLAS: Estilos para la tabla de iteraciones compartida en los métodos */
+.table-responsive { overflow-x: auto; border-radius: var(--radius-md); background: var(--bg-card); border: 1px solid var(--border-light); }
+.data-table { width: 100%; border-collapse: collapse; font-family: 'Fira Code', monospace; font-size: 13px; text-align: center; }
+.data-table th { background: var(--bg-table-header); color: var(--text-secondary); padding: 14px 16px; font-weight: 500; font-family: 'Inter', sans-serif; font-size: 12px; text-transform: uppercase; border-bottom: 1px solid var(--border-light); }
+.data-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-table); color: var(--text-primary); }
+.data-table tbody tr:hover { background: var(--bg-hover); }
+.data-table tbody tr.separator-row td { background: var(--bg-hover); height: 2px; padding: 0; }
+
+/* 9. CONSOLA Y RESULTADOS: Estilos para la caja negra de texto y tarjetas de éxito */
+.console-output {
+    background: var(--bg-console);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    color: var(--accent-primary); /* Texto ámbar — look de terminal */
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+    padding: 16px;
+    width: 100%;
+    min-height: 250px;
+    resize: none;
+    line-height: 1.8;
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.3); /* Glow sutil tipo CRT */
+}
+.console-output:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.08); }
+.resultado-tarjeta {
+    background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-md);
+    padding: 24px; font-size: 16px; font-weight: 500; color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center; transition: all 0.3s;
+}
+.resultado-tarjeta.success { background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3); color: var(--color-success); box-shadow: 0 0 20px rgba(16, 185, 129, 0.1); }
+
+/* 10. SCROLLBARS Y RESPONSIVE */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(245, 158, 11, 0.4); }
+
+@media (max-width: 1024px) {
+    .results-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+    .nav-menu { display: none; position: absolute; top: 72px; left: 0; right: 0; background: var(--bg-topbar); flex-direction: column; padding: 16px 24px; border-bottom: 1px solid var(--border-light); }
+    .nav-menu.show { display: flex; }
+    .mobile-menu-btn { display: block; }
+    .form-row { flex-direction: column; align-items: stretch; }
+    .form-actions { flex-direction: column; }
+    .form-actions .btn { width: 100%; }
+}
+
+/* ─────────────────────────────────────────────
+   TUTORIAL INTERACTIVO (Driver.js Custom Theme)
+   ───────────────────────────────────────────── */
+.driver-popover.driverjs-theme {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--accent-primary);
+    border-radius: var(--radius-lg);
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3), 0 0 20px rgba(245, 158, 11, 0.15);
+}
+.driver-popover.driverjs-theme .driver-popover-title {
+    font-family: 'Outfit', sans-serif;
+    color: var(--accent-primary);
+    font-size: 20px;
+}
+.driver-popover.driverjs-theme .driver-popover-description {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 8px;
+    line-height: 1.6;
+}
+.driver-popover.driverjs-theme .driver-popover-footer button {
+    background-color: var(--bg-input);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    text-shadow: none;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+.driver-popover.driverjs-theme .driver-popover-footer button:hover {
+    background-color: var(--accent-primary);
+    color: #fff;
+    border-color: var(--accent-primary);
+}
+.driver-popover.driverjs-theme .driver-popover-progress-text {
+    color: var(--text-muted);
+}
+/* Overlay resalte (caja de borde animado alrededor del elemento guiado) */
+div#driver-highlighted-element-stage {
+    border: 2px solid var(--accent-primary) !important;
+    border-radius: var(--radius-md) !important;
+    background: transparent !important;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.2) !important;
+}

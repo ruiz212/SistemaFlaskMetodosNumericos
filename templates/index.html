@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+{% endblock %}
+
+{% block content %}
+<!-- ═══════════════════════════════════════════════════════
+     HERO SECTION — con canvas matemático animado
+     ═══════════════════════════════════════════════════════ -->
+<section class="hero-wrapper">
+
+    <!-- Canvas: el elemento diferenciador único — dibuja curvas matemáticas en tiempo real -->
+    <canvas id="math-canvas"></canvas>
+
+    <!-- Contenido principal del hero -->
+    <div class="hero-content">
+
+        <div class="hero-chip reveal-up">
+            <span class="hero-chip-dot"></span>
+            UNI · Suite Numérica Pro v2.0
+        </div>
+
+        <h1 class="hero-title reveal-up">
+            Donde el cálculo<br>
+            <span class="hero-title-accent">encuentra la elegancia</span>
+        </h1>
+
+        <p class="hero-subtitle reveal-up">
+            Una suite de métodos numéricos construida con precisión matemática.<br>
+            Convergencia garantizada. Error relativo tolerado. En milisegundos.
+        </p>
+
+        <div class="hero-cta reveal-up">
+            <a href="{{ url_for('no_lineales') }}" class="btn-hero-primary">
+                <span><i class="ph ph-play-circle"></i></span>
+                <span>Comenzar ahora</span>
+            </a>
+            <a href="#modulos" class="btn-hero-outline">
+                <i class="ph ph-compass"></i>
+                Ver módulos
+            </a>
+        </div>
+
+        <!-- Estadísticas bajo los botones -->
+        <div class="hero-stats reveal-up">
+            <div class="hero-stat">
+                <span class="hero-stat-number">9</span>
+                <span class="hero-stat-label">Algoritmos</span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-number">3</span>
+                <span class="hero-stat-label">Módulos</span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-number">∞</span>
+                <span class="hero-stat-label">Iteraciones</span>
+            </div>
+            <div class="hero-stat">
+                <span class="hero-stat-number">ε</span>
+                <span class="hero-stat-label">Precisión</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicador scroll -->
+    <div class="scroll-indicator">
+        <div class="scroll-indicator-line"></div>
+        <span>scroll</span>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     TICKER — Banda de métodos
+     ═══════════════════════════════════════════════════════ -->
+<div class="ticker-section" aria-hidden="true">
+    <div class="ticker-track" id="ticker-track">
+        <!-- Se duplica en JS para el loop infinito -->
+        <span class="ticker-item"><i class="ph ph-wave-triangle"></i> Bisección</span>
+        <span class="ticker-sep">·</span>
+        <span class="ticker-item"><i class="ph ph-git-branch"></i> Regla Falsa</span>
+        <span class="ticker-sep">·</span>
+        <span class="ticker-item"><i class="ph ph-lightning"></i> Newton-Raphson</span>
+        <span class="ticker-sep">·</span>
+        <span class="ticker-item"><i class="ph ph-arrows-left-right"></i> Secante</span>
+        <span class="ticker-sep">·</span>
+        <span class="ticker-item"><i class="ph ph-circle-dashed"></i> Punto Fijo</span>
+        <span class="ticker-sep">·</span>
+        <span class="ticker-item"><i class="ph ph-polygon"></i> Müller</span>
+        <span class="ticker-sep">·</span>
+        <span class="ticker-item"><i class="ph ph-brackets-curly"></i> Bairstow</span>
+        <span class="ticker-sep">·</span>
+        <span class="ticker-item"><i class="ph ph-function"></i> Horner-Newton</span>
+        <span class="ticker-sep">·</span>
+        <span class="ticker-item"><i class="ph ph-intersect"></i> Newton Multivariable</span>
+        <span class="ticker-sep">·</span>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MÓDULOS — Grid de 3 módulos principales
+     ═══════════════════════════════════════════════════════ -->
+<section class="methods-section" id="modulos">
+    <div class="section-header reveal-up">
+        <span class="section-eyebrow">// módulos del sistema</span>
+        <h2 class="section-title">Tres módulos.<br><span>Un ecosistema matemático.</span></h2>
+    </div>
+
+    <div class="modules-grid">
+
+        <!-- Módulo 01: Ecuaciones No Lineales -->
+        <a href="{{ url_for('no_lineales') }}" class="module-card reveal-up">
+            <span class="module-number">01</span>
+            <div class="module-icon-wrap gold">
+                <i class="ph-bold ph-chart-line-up"></i>
+            </div>
+            <div class="module-name">Ecuaciones<br>No Lineales</div>
+            <p class="module-desc">
+                Localiza raíces de funciones no lineales con métodos de bracketing y punto abierto. Convergencia controlada con tolerancia configurable.
+            </p>
+            <div class="module-methods">
+                <span class="module-tag">bisección</span>
+                <span class="module-tag">regla-falsa</span>
+                <span class="module-tag">newton-raphson</span>
+                <span class="module-tag">secante</span>
+                <span class="module-tag">punto-fijo</span>
+            </div>
+            <i class="ph ph-arrow-up-right module-arrow"></i>
+        </a>
+
+        <!-- Módulo 02: Raíces de Polinomios -->
+        <a href="{{ url_for('polinomios') }}" class="module-card reveal-up">
+            <span class="module-number">02</span>
+            <div class="module-icon-wrap violet">
+                <i class="ph-bold ph-function"></i>
+            </div>
+            <div class="module-name">Raíces de<br>Polinomios</div>
+            <p class="module-desc">
+                Deflación polinomial avanzada. Encuentra todas las raíces incluyendo las complejas imaginarias mediante el algoritmo de Bairstow.
+            </p>
+            <div class="module-methods">
+                <span class="module-tag">müller</span>
+                <span class="module-tag">bairstow</span>
+                <span class="module-tag">horner-newton</span>
+            </div>
+            <i class="ph ph-arrow-up-right module-arrow"></i>
+        </a>
+
+        <!-- Módulo 03: Sistemas No Lineales -->
+        <a href="{{ url_for('sistemas') }}" class="module-card reveal-up">
+            <span class="module-number">03</span>
+            <div class="module-icon-wrap cyan">
+                <i class="ph-bold ph-intersect"></i>
+            </div>
+            <div class="module-name">Sistemas<br>No Lineales</div>
+            <p class="module-desc">
+                Resuelve sistemas de ecuaciones simultáneas usando Newton-Raphson multivariable. La matriz Jacobiana se calcula simbólicamente con SymPy.
+            </p>
+            <div class="module-methods">
+                <span class="module-tag">newton-raphson</span>
+                <span class="module-tag">jacobiana-simbólica</span>
+                <span class="module-tag">sympy</span>
+            </div>
+            <i class="ph ph-arrow-up-right module-arrow"></i>
+        </a>
+
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     HIGHLIGHT — 2 tarjetas de feature
+     ═══════════════════════════════════════════════════════ -->
+<section class="highlight-section">
+
+    <!-- Card 1: Motor SymPy -->
+    <div class="highlight-card dark reveal-up">
+        <div class="highlight-card-glow-orb orb-gold"></div>
+        <div class="highlight-label">Motor simbólico</div>
+        <h3 class="highlight-title">SymPy calcula<br>la Jacobiana por ti</h3>
+        <p class="highlight-body">
+            El backend en Python interpreta, deriva y evalúa automáticamente. Se acabó programar derivadas a mano — el sistema lo resuelve algebraicamente en tiempo real.
+        </p>
+        <div class="code-snippet">
+            <span class="code-k">import</span> sympy <span class="code-k">as</span> <span class="code-n">sp</span><br><br>
+            <span class="code-c"># Derivación automática</span><br>
+            expr = sp.sympify(<span class="code-s">"x**3 - 3.5*x**2 + x"</span>)<br>
+            J = sp.<span class="code-f">diff</span>(expr, <span class="code-n">x</span>)<br><br>
+            <span class="code-c"># Evaluación numérica</span><br>
+            val = <span class="code-f">float</span>(J.subs(<span class="code-n">x</span>, <span class="code-s">2.0</span>))
+        </div>
+    </div>
+
+    <!-- Card 2: Bairstow -->
+    <div class="highlight-card glow reveal-up">
+        <div class="highlight-card-glow-orb orb-violet"></div>
+        <div class="highlight-label" style="color: var(--vp-violet-l);">
+            <span style="background: var(--vp-violet-l); width: 20px; height: 1px; display: block;"></span>
+            Algoritmo exclusivo
+        </div>
+        <h3 class="highlight-title">Bairstow encuentra<br>raíces <span style="background: var(--gradient-gold-violet); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">complejas</span></h3>
+        <p class="highlight-body">
+            El módulo más potente de la suite. Deflación polinomial completa para encontrar absolutamente todas las raíces — reales e imaginarias — de polinomios de cualquier grado.
+        </p>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 120px; background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.2); border-radius: 14px; padding: 20px; text-align: center;">
+                <div style="font-family: 'Fira Code'; font-size: 22px; color: var(--vp-violet-l); font-weight: 700; margin-bottom: 4px;">ℂ</div>
+                <div style="font-size: 12px; color: var(--vp-muted);">Raíces complejas</div>
+            </div>
+            <div style="flex: 1; min-width: 120px; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); border-radius: 14px; padding: 20px; text-align: center;">
+                <div style="font-family: 'Fira Code'; font-size: 22px; color: var(--vp-gold); font-weight: 700; margin-bottom: 4px;">ℝ</div>
+                <div style="font-size: 12px; color: var(--vp-muted);">Raíces reales</div>
+            </div>
+            <div style="flex: 1; min-width: 120px; background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.2); border-radius: 14px; padding: 20px; text-align: center;">
+                <div style="font-family: 'Fira Code'; font-size: 22px; color: #22d3ee; font-weight: 700; margin-bottom: 4px;">∞</div>
+                <div style="font-size: 12px; color: var(--vp-muted);">Cualquier grado</div>
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     AUTORES
+     ═══════════════════════════════════════════════════════ -->
+<section class="authors-section">
+    <div class="section-header reveal-up">
+        <span class="section-eyebrow">// equipo de desarrollo</span>
+        <h2 class="section-title">Construido en la <span>UNI</span></h2>
+    </div>
+
+    <div class="authors-grid">
+
+        <!-- Anderson Ruiz -->
+        <div class="author-card-new reveal-up">
+            <div class="author-top">
+                <div class="author-avatar">
+                    <img src="https://i.supaimg.com/9ee9b088-f114-4da3-ac14-01ff5fe44fa6/a55ada95-58d3-4fb5-8983-41404e623cca.png" alt="Anderson Ruiz">
+                </div>
+                <div>
+                    <div class="author-info-name">Anderson Ruiz</div>
+                    <span class="author-role-badge">Backend · Algoritmos</span>
+                </div>
+            </div>
+            <p>Especialista en codificación matemática y control de errores iterativos. Responsable del servidor Flask con SymPy y la lógica numérica de convergencia.</p>
+        </div>
+
+        <!-- Jeniffer Ramírez -->
+        <div class="author-card-new reveal-up">
+            <div class="author-top">
+                <div class="author-avatar-icon">
+                    <i class="ph ph-layout"></i>
+                </div>
+                <div>
+                    <div class="author-info-name">Jeniffer Ramírez</div>
+                    <span class="author-role-badge violet">Frontend · UX/UI</span>
+                </div>
+            </div>
+            <p>Arquitecta del Front-End en HTML/CSS/JS. Responsable de las interacciones asíncronas y la estética visual que define la experiencia de la Suite.</p>
+        </div>
+
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════ -->
+<footer class="index-footer">
+    Suite Numérica Pro · UNI · 2026 · Construida con <span>♦</span> y Python
+</footer>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ============================================================
+   MATH CANVAS — El elemento diferenciador
+   Dibuja curvas matemáticas animadas como fondo del hero.
+   Usa sen, cos, y funciones compuestas que simulan gráficas
+   de análisis numérico sobre una cuadrícula de coordenadas.
+   ============================================================ */
+(function() {
+    const canvas = document.getElementById('math-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let W, H, time = 0;
+    const GOLD   = 'rgba(245, 158, 11, ';
+    const VIOLET = 'rgba(124, 58, 237, ';
+    const CYAN   = 'rgba(6, 182, 212, ';
+
+    function resize() {
+        W = canvas.width  = canvas.offsetWidth;
+        H = canvas.height = canvas.offsetHeight;
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    /* Dibuja una función matemática como trazo */
+    function drawCurve(fn, color, alpha, lineWidth = 1.5) {
+        ctx.beginPath();
+        ctx.strokeStyle = color + alpha + ')';
+        ctx.lineWidth = lineWidth;
+        ctx.lineJoin = 'round';
+        let first = true;
+        for (let px = 0; px <= W; px += 2) {
+            const x = (px - W / 2) / (W / 10);   // normalizar a [-5, 5]
+            const y = fn(x, time);
+            const py = H / 2 - y * (H / 12);     // escalar al canvas
+            if (first) { ctx.moveTo(px, py); first = false; }
+            else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+    }
+
+    /* Dibuja la cuadrícula de ejes */
+    function drawGrid() {
+        const step = W / 10;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
+        ctx.lineWidth = 1;
+
+        // Líneas verticales
+        for (let x = 0; x <= W; x += step) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, H);
+            ctx.stroke();
+        }
+        // Líneas horizontales
+        const vStep = H / 8;
+        for (let y = 0; y <= H; y += vStep) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(W, y);
+            ctx.stroke();
+        }
+
+        // Ejes principales
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, H / 2);
+        ctx.lineTo(W, H / 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(W / 2, 0);
+        ctx.lineTo(W / 2, H);
+        ctx.stroke();
+    }
+
+    /* Dibuja puntos de raíces (convergencia visual) */
+    function drawRootPoints(fn, color, alpha) {
+        // Localiza cruces por cero aproximados
+        for (let px = 4; px < W - 4; px += 4) {
+            const x1 = (px - W / 2) / (W / 10);
+            const x2 = ((px + 4) - W / 2) / (W / 10);
+            const y1 = fn(x1, time);
+            const y2 = fn(x2, time);
+            if (y1 * y2 < 0) {
+                const xRoot = px + 2;
+                const pulse = Math.abs(Math.sin(time * 3)) * 0.7 + 0.3;
+                ctx.beginPath();
+                ctx.arc(xRoot, H / 2, 4, 0, Math.PI * 2);
+                ctx.fillStyle = color + (alpha * pulse) + ')';
+                ctx.fill();
+                // Línea vertical punteada
+                ctx.setLineDash([3, 4]);
+                ctx.beginPath();
+                ctx.strokeStyle = color + (alpha * 0.4) + ')';
+                ctx.lineWidth = 1;
+                ctx.moveTo(xRoot, H / 2);
+                ctx.lineTo(xRoot, H / 2 - fn(x1, time) * (H / 12));
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+    }
+
+    /* Las funciones matemáticas que se dibujan */
+    const curves = [
+        // f(x) = sin(x + t) · e^(-|x|/4) — onda amortiguada
+        {
+            fn: (x, t) => Math.sin(x + t * 0.4) * Math.exp(-Math.abs(x) / 4.5),
+            color: GOLD, alpha: 0.55, lw: 2
+        },
+        // g(x) = cos(x·1.5 + t) / (1+x²/4) — racional oscilante
+        {
+            fn: (x, t) => Math.cos(x * 1.5 + t * 0.25) / (1 + x * x / 4),
+            color: VIOLET, alpha: 0.45, lw: 1.5
+        },
+        // h(x) = sin(x²/3 - t) · 0.5 — variación cuadrática
+        {
+            fn: (x, t) => Math.sin(x * x / 3 - t * 0.3) * 0.5,
+            color: CYAN, alpha: 0.3, lw: 1.2
+        },
+        // i(x) = tanh(x - t·0.5) — función sigmoide deslizante
+        {
+            fn: (x, t) => Math.tanh(x - t * 0.2) * 1.5,
+            color: GOLD, alpha: 0.18, lw: 1
+        },
+    ];
+
+    function render() {
+        ctx.clearRect(0, 0, W, H);
+        drawGrid();
+
+        // Dibujar todas las curvas
+        curves.forEach(c => {
+            drawCurve(c.fn, c.color, c.alpha, c.lw);
+        });
+
+        // Puntos raíces sobre la primera curva
+        drawRootPoints(curves[0].fn, GOLD, 0.8);
+
+        time += 0.012;
+        requestAnimationFrame(render);
+    }
+
+    render();
+})();
+
+/* ============================================================
+   TICKER DUPLICADO — loop infinito
+   ============================================================ */
+(function() {
+    const track = document.getElementById('ticker-track');
+    if (track) {
+        track.innerHTML += track.innerHTML; // duplicar contenido
+    }
+})();
+
+/* ============================================================
+   ANIMACIONES DE ENTRADA — reveal-up secuencial con IntersectionObserver
+   ============================================================ */
+(function() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => {
+                    anime({
+                        targets: entry.target,
+                        translateY: [40, 0],
+                        opacity: [0, 1],
+                        duration: 900,
+                        easing: 'easeOutExpo'
+                    });
+                }, entry.target.dataset.delay || 0);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    // Asignar delays escalonados por grupo
+    let heroDelay = 0;
+    document.querySelectorAll('.hero-content .reveal-up').forEach(el => {
+        el.dataset.delay = heroDelay;
+        heroDelay += 120;
+        observer.observe(el);
+    });
+
+    let scrollDelay = 0;
+    document.querySelectorAll('.methods-section .reveal-up, .highlight-section .reveal-up, .authors-section .reveal-up').forEach(el => {
+        el.dataset.delay = scrollDelay % 300;
+        scrollDelay += 80;
+        observer.observe(el);
+    });
+})();
+</script>
+{% endblock %}
