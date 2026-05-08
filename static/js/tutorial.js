@@ -1,278 +1,216 @@
 /**
  * tutorial.js
- * ===========
- * Tutorial interactivo con Driver.js para la Suite Numérica Pro.
- * Cada página tiene su propio set de pasos contextuales con explicaciones
- * detalladas de cada campo, botón y sección.
+ * Tutorial interactivo con Driver.js — Suite Numérica Pro
  */
 
 document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('tutorial-btn');
-    if (btn) {
-        btn.addEventListener('click', iniciarTutorial);
-    }
+    if (btn) btn.addEventListener('click', iniciarTutorial);
 });
 
-// ─── Configuración global de Driver.js ───────────────────────────────────────
 const DRIVER_CONFIG = {
     showProgress:   true,
     animate:        true,
     popoverClass:   'driverjs-theme',
-    nextBtnText:    'Siguiente →',
-    prevBtnText:    '← Anterior',
-    doneBtnText:    '✓ Entendido',
-    progressText:   'Paso {{current}} de {{total}}',
+    nextBtnText:    'Siguiente',
+    prevBtnText:    'Anterior',
+    doneBtnText:    'Listo',
+    progressText:   '{{current}} / {{total}}',
     smoothScroll:   true,
     allowClose:     true,
-    overlayOpacity: 0.55,
+    overlayOpacity: 0.5,
 };
 
-// ─── Función principal ────────────────────────────────────────────────────────
 function iniciarTutorial() {
     const driver = window.driver.js.driver;
     const path   = window.location.pathname;
 
-    let steps = [];
+    let steps =
+        path === '/' || path === ''         ? stepsIndex()      :
+        path.includes('no-lineales')        ? stepsNoLineales() :
+        path.includes('polinomios')         ? stepsPolinomios() :
+        path.includes('sistemas')           ? stepsSistemas()   :
+        stepsGenerico();
 
-    if (path === '/' || path === '' || path === '/index.html') {
-        steps = stepsIndex();
-    } else if (path.includes('no-lineales')) {
-        steps = stepsNoLineales();
-    } else if (path.includes('polinomios')) {
-        steps = stepsPolinomios();
-    } else if (path.includes('sistemas')) {
-        steps = stepsSistemas();
-    } else {
-        steps = stepsGenerico();
-    }
-
-    const driverObj = driver({ ...DRIVER_CONFIG, steps });
-    driverObj.drive();
+    driver({ ...DRIVER_CONFIG, steps }).drive();
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PÁGINA DE INICIO
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── INICIO ──────────────────────────────────────────────────────────────────
 function stepsIndex() {
     return [
         {
             popover: {
-                title: '👋 Bienvenido a la Suite Numérica Pro',
+                title: 'Suite Numérica Pro',
                 description:
-                    'Esta plataforma implementa los principales <b>métodos numéricos iterativos</b> ' +
-                    'para encontrar raíces de ecuaciones y resolver sistemas. ' +
-                    'Te daré un recorrido rápido por todo lo que puedes hacer.',
-            }
-        },
-        {
-            element: '.brand',
-            popover: {
-                title: '🔢 Suite Numérica',
-                description:
-                    'El logo Σ representa la suma de todos los métodos numéricos integrados: ' +
-                    '<b>Bisección, Regla Falsa, Newton-Raphson, Secante, Punto Fijo, ' +
-                    'Müller, Bairstow, Horner-Newton</b> y <b>Sistemas No Lineales</b>.',
-                side: 'bottom', align: 'start'
+                    'Plataforma para resolver ecuaciones y sistemas no lineales usando ' +
+                    'métodos numéricos iterativos. Tiene tres módulos principales que ' +
+                    'puedes explorar desde el menú superior.',
             }
         },
         {
             element: '.nav-menu',
             popover: {
-                title: '🧭 Menú de Navegación',
+                title: 'Módulos disponibles',
                 description:
-                    'Desde aquí accedes a los <b>3 módulos principales</b>:<br><br>' +
-                    '📐 <b>Ecuaciones</b> — Raíces de f(x)=0 con una variable<br>' +
-                    '📊 <b>Polinomios</b> — Raíces reales y complejas de polinomios<br>' +
-                    '🔗 <b>Sistemas</b> — Newton-Raphson multivariable (n ecuaciones)',
+                    '<b>Ecuaciones</b> resuelve f(x) = 0 con una sola variable. ' +
+                    '<b>Polinomios</b> encuentra todas las raíces de un polinomio, ' +
+                    'incluyendo raíces complejas. ' +
+                    '<b>Sistemas</b> resuelve n ecuaciones con n variables.',
                 side: 'bottom'
             }
         },
         {
             element: '#theme-btn',
             popover: {
-                title: '🌙 Modo Oscuro / Claro',
+                title: 'Tema visual',
                 description:
-                    'Cambia entre el <b>tema oscuro (Void)</b> y el <b>tema claro</b>. ' +
-                    'Tu preferencia se guarda automáticamente en el navegador.',
-                side: 'left'
-            }
-        },
-        {
-            element: '#tutorial-btn',
-            popover: {
-                title: '❓ Botón de Tutorial',
-                description:
-                    'En <b>cualquier página</b> puedes hacer clic en este ícono de pregunta ' +
-                    'para lanzar el tutorial contextual. Cada módulo tiene su propio tour explicativo.',
+                    'Cambia entre modo oscuro y modo claro. ' +
+                    'La preferencia se guarda automáticamente.',
                 side: 'left'
             }
         },
         {
             element: '.modules-grid',
             popover: {
-                title: '🚀 Acceso Rápido a Módulos',
+                title: 'Acceso rápido',
                 description:
-                    'Haz clic en cualquiera de estas tarjetas para ir directamente al módulo. ' +
-                    'Cada tarjeta describe brevemente qué métodos incluye y para qué tipo de ' +
-                    'problema sirve.',
+                    'Cada tarjeta describe brevemente qué métodos incluye el módulo. ' +
+                    'Haz clic en cualquiera para comenzar.',
                 side: 'top'
             }
         },
     ];
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PÁGINA: ECUACIONES NO LINEALES
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── ECUACIONES NO LINEALES ───────────────────────────────────────────────────
 function stepsNoLineales() {
     const steps = [
         {
             popover: {
-                title: '📐 Buscador de Raíces — f(x) = 0',
+                title: 'Buscador de raíces',
                 description:
-                    'Este módulo encuentra la <b>raíz de una función</b>, es decir, el valor de ' +
-                    '<code>x</code> tal que <b>f(x) = 0</b>.<br><br>' +
-                    'Disponible para funciones con <b>1 sola variable</b> usando métodos iterativos. ' +
-                    'Al terminar el cálculo, verás la tabla de iteraciones <b>y una gráfica animada</b> de la función.',
+                    'Encuentra el valor de <code>x</code> donde <code>f(x) = 0</code>. ' +
+                    'Elige el método según los datos que tengas disponibles y la función a analizar.',
             }
         },
         {
             element: '#ecuacion-nl',
             popover: {
-                title: '1️⃣ Ecuación f(x)',
+                title: 'Ecuación f(x)',
                 description:
-                    'Escribe tu función usando Python/SymPy. Ejemplos válidos:<br><br>' +
-                    '• <code>x**3 - 2*x - 5</code><br>' +
-                    '• <code>x + ln(x)</code><br>' +
-                    '• <code>cos(x) - x</code><br>' +
-                    '• <code>exp(x) - 3*x</code><br><br>' +
-                    '⚠️ Usa <code>**</code> para potencias, <code>*</code> para multiplicar. ' +
-                    'Puedes escribir <code>X</code> o <code>x</code> — el sistema los trata igual.',
+                    'Escribe la función usando sintaxis estándar de Python. ' +
+                    'Usa <code>**</code> para potencias y <code>*</code> para multiplicar.<br><br>' +
+                    'Puedes usar: <code>sin</code>, <code>cos</code>, <code>exp</code>, ' +
+                    '<code>ln</code>, <code>sqrt</code>, entre otras.<br>' +
+                    'Ejemplo: <code>x**3 - 2*x - 5</code> o <code>cos(x) - x</code>',
                 side: 'bottom'
             }
         },
         {
             element: '#metodo-nl',
             popover: {
-                title: '2️⃣ Método Numérico',
+                title: 'Método de solución',
                 description:
-                    'Selecciona el algoritmo según lo que tengas disponible:<br><br>' +
-                    '• <b>Bisección</b> — Necesita intervalo [a,b] con cambio de signo. Lento pero seguro.<br>' +
-                    '• <b>Regla Falsa</b> — Como Bisección, pero usa interpolación lineal. Más rápido.<br>' +
-                    '• <b>Newton-Raphson</b> — Solo necesita un punto. Muy rápido. Usa la derivada.<br>' +
-                    '• <b>Secante</b> — Como Newton pero sin derivada analítica. Usa 2 puntos.<br>' +
-                    '• <b>Punto Fijo</b> — Necesita |g\'(x)| &lt; 1 para converger.',
+                    '<b>Bisección y Regla Falsa</b> requieren un intervalo [a, b] donde la ' +
+                    'función cambie de signo. Son robustos pero más lentos.<br><br>' +
+                    '<b>Newton-Raphson</b> converge muy rápido con un solo punto inicial, ' +
+                    'pero necesita que la derivada exista y no sea cero.<br><br>' +
+                    '<b>Secante</b> es similar a Newton pero usa dos puntos en lugar de la derivada. ' +
+                    '<b>Punto Fijo</b> itera sobre g(x) = x.',
                 side: 'bottom'
             }
         },
         {
             element: '#angulo-nl',
             popover: {
-                title: '3️⃣ Sistema de Ángulos',
+                title: 'Sistema de ángulos',
                 description:
-                    'Si usas funciones trigonométricas (<code>sin</code>, <code>cos</code>, <code>tan</code>...):<br><br>' +
-                    '• <b>Radianes</b> — Estándar matemático (recomendado)<br>' +
-                    '• <b>Grados</b> — El sistema convierte automáticamente: sin(x°) → sin(x·π/180)<br><br>' +
-                    'Si tu función no tiene trigonométricas, este campo no afecta el resultado.',
+                    'Aplica solo si usas funciones trigonométricas. ' +
+                    'En matemáticas el estándar son radianes. ' +
+                    'Si tu función está definida en grados, selecciona esa opción ' +
+                    'y el sistema hará la conversión automáticamente.',
                 side: 'bottom'
             }
         },
         {
             element: '#tol-nl',
             popover: {
-                title: '4️⃣ Tolerancia (Error %)',
+                title: 'Tolerancia',
                 description:
-                    'Es el <b>error relativo porcentual máximo</b> aceptable para detener el método:<br><br>' +
-                    '<code>Eₐ = |x_nuevo - x_anterior| / |x_nuevo| × 100%</code><br><br>' +
-                    'El algoritmo para cuando <b>Eₐ &lt; tolerancia</b>.<br>' +
-                    'Ejemplo: <code>0.01</code> = parar cuando el error sea menor al 0.01%.',
+                    'Porcentaje de error relativo máximo aceptado para detener el método:<br><br>' +
+                    '<code>Eₐ = |x_nuevo − x_anterior| / |x_nuevo| × 100%</code><br><br>' +
+                    'Cuando este valor baja de la tolerancia, el algoritmo se detiene. ' +
+                    'Un valor típico es <code>0.01</code> (0.01%).',
                 side: 'bottom'
             }
         },
         {
             element: '#campos-dinamicos-nl',
             popover: {
-                title: '5️⃣ Parámetros del Método',
+                title: 'Parámetros del método',
                 description:
-                    'Estos campos cambian según el método elegido:<br><br>' +
-                    '• <b>Bisección/Regla Falsa</b> → Límite inferior <code>a</code> y superior <code>b</code> ' +
-                    '(f(a) y f(b) deben tener signos opuestos)<br>' +
-                    '• <b>Newton-Raphson</b> → Punto inicial <code>ci</code><br>' +
-                    '• <b>Secante</b> → Dos puntos iniciales <code>x0</code> y <code>x1</code><br>' +
-                    '• <b>Punto Fijo</b> → Punto inicial <code>x0</code>',
+                    'Los campos cambian según el método seleccionado.<br><br>' +
+                    'Bisección y Regla Falsa piden los límites <code>a</code> y <code>b</code>, ' +
+                    'donde f(a) y f(b) deben tener signos opuestos.<br>' +
+                    'Newton-Raphson pide un punto inicial <code>ci</code>.<br>' +
+                    'Secante pide dos puntos <code>x0</code> y <code>x1</code>.',
                 side: 'top'
             }
         },
         {
             element: '.form-actions',
             popover: {
-                title: '6️⃣ Calcular y Limpiar',
+                title: 'Ejecutar el cálculo',
                 description:
-                    '• <b>Calcular</b> → Ejecuta el método y muestra la tabla de iteraciones más la gráfica.<br>' +
-                    '• <b>Limpiar</b> → Resetea todos los campos y oculta la gráfica (con animación de papelera).',
+                    '<b>Calcular</b> ejecuta el método iterativo y muestra la tabla de resultados ' +
+                    'junto con la gráfica de la función.<br><br>' +
+                    '<b>Limpiar</b> reinicia todos los campos.',
                 side: 'top'
             }
         },
         {
             element: '.table-container',
             popover: {
-                title: '📋 Tabla de Iteraciones',
+                title: 'Tabla de iteraciones',
                 description:
-                    'Muestra el proceso iterativo completo, fila por fila:<br><br>' +
-                    '• Cada fila = una iteración del método<br>' +
-                    '• La última columna es el <b>error relativo %</b><br>' +
-                    '• La primera iteración muestra <code>---</code> (no hay punto anterior aún)<br>' +
-                    '• El método para cuando el error es menor a la tolerancia ingresada.',
+                    'Muestra el proceso completo, una fila por iteración. ' +
+                    'La última columna es el error relativo porcentual. ' +
+                    'La primera iteración no tiene error porque no hay punto anterior de comparación.',
                 side: 'top'
             }
         },
         {
             element: '#resultado-nl',
             popover: {
-                title: '✅ Resultado Final',
-                description:
-                    'Aquí aparece la <b>raíz encontrada</b> con 8 decimales de precisión ' +
-                    'y el nombre del método que convergió.',
-                side: 'top'
-            }
-        },
-        {
-            element: '#btn-exportar-nl',
-            popover: {
-                title: '📥 Exportar a Excel',
-                description:
-                    'Descarga la tabla de iteraciones en formato <b>CSV</b> (compatible con Excel). ' +
-                    'Se activa automáticamente después de calcular.',
+                title: 'Resultado',
+                description: 'La raíz encontrada con 8 cifras decimales de precisión.',
                 side: 'top'
             }
         },
     ];
 
-    // Paso de la gráfica: condicional según si ya hay un cálculo realizado
+    // El paso de la gráfica solo se muestra si ya existe un cálculo previo
     const graficaPanel = document.getElementById('grafica-seccion');
     if (graficaPanel && graficaPanel.style.display !== 'none') {
         steps.push({
             element: '#grafica-seccion',
             popover: {
-                title: '📈 Gráfica Animada de f(x)',
+                title: 'Gráfica de la función',
                 description:
-                    'Panel de visualización de la función:<br><br>' +
-                    '🟡 <b>Línea dorada</b> → Curva completa de f(x)<br>' +
-                    '🔵 <b>Puntos cian</b> → Iteraciones del método<br>' +
-                    '⭐ <b>Estrella verde</b> → Raíz encontrada<br>' +
-                    '🔢 <b>Badge naranja</b> → Contador animado de iteraciones<br><br>' +
-                    'El rango del eje X se calcula automáticamente según el dominio válido de f(x).',
+                    'Muestra la curva completa de f(x) en el rango relevante, ' +
+                    'con los puntos de cada iteración marcados y la raíz señalada. ' +
+                    'El rango del eje X se determina automáticamente según el dominio válido.',
                 side: 'top'
             }
         });
     } else {
         steps.push({
             popover: {
-                title: '📈 Gráfica de la Función',
+                title: 'Gráfica de la función',
                 description:
-                    'Después de hacer clic en <b>Calcular</b>, aparece un panel de gráfica animado ' +
-                    'mostrando la curva de f(x), los puntos de cada iteración y la raíz encontrada.<br><br>' +
-                    '💡 Vuelve a abrir el tutorial <b>después de calcular</b> para ver la explicación de la gráfica.'
+                    'Después de calcular aparece una gráfica con la curva de f(x), ' +
+                    'los puntos de cada iteración y la raíz encontrada. ' +
+                    'Vuelve a abrir el tutorial tras el primer cálculo para ver ese paso en detalle.'
             }
         });
     }
@@ -280,257 +218,184 @@ function stepsNoLineales() {
     return steps;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PÁGINA: POLINOMIOS
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── POLINOMIOS ───────────────────────────────────────────────────────────────
 function stepsPolinomios() {
     return [
         {
             popover: {
-                title: '📊 Raíces de Polinomios',
+                title: 'Raíces de polinomios',
                 description:
-                    'Este módulo calcula las <b>raíces de polinomios</b>, incluyendo raíces ' +
-                    '<b>complejas (imaginarias)</b> que los métodos del módulo de Ecuaciones no pueden encontrar.<br><br>' +
-                    'Trabaja directamente con los <b>coeficientes</b> del polinomio:<br>' +
-                    '<code>P(x) = aₙxⁿ + aₙ₋₁xⁿ⁻¹ + ... + a₁x + a₀</code>',
+                    'Calcula todas las raíces de un polinomio de grado n, ' +
+                    'incluyendo raíces complejas que no son posibles con los métodos del módulo de Ecuaciones.',
             }
         },
         {
             element: '#metodo-pol',
             popover: {
-                title: '1️⃣ Método',
+                title: 'Método',
                 description:
-                    'Tres algoritmos disponibles según el tipo de raíces que buscas:<br><br>' +
-                    '• <b>Bairstow</b> — Extrae pares de raíces (reales o complejas conjugadas) del polinomio usando factores cuadráticos. Ideal para polinomios de grado par.<br><br>' +
-                    '• <b>Müller</b> — Ajusta una parábola a 3 puntos. Puede encontrar raíces complejas y funciona con funciones no polinomiales.<br><br>' +
-                    '• <b>Horner-Newton</b> — Newton-Raphson optimizado con evaluación de Horner. Rápido pero puede dar raíces complejas solo si el punto inicial es complejo.',
+                    '<b>Bairstow</b> extrae pares de raíces usando factores cuadráticos. ' +
+                    'Es el más completo para polinomios.<br><br>' +
+                    '<b>Müller</b> ajusta una parábola a tres puntos y puede encontrar ' +
+                    'raíces complejas. También funciona con funciones no polinomiales.<br><br>' +
+                    '<b>Horner-Newton</b> combina la evaluación eficiente de Horner con ' +
+                    'Newton-Raphson. Ideal cuando ya sabes la zona aproximada de una raíz.',
                 side: 'bottom'
             }
         },
         {
             element: '#grupo-grado',
             popover: {
-                title: '2️⃣ Grado del Polinomio',
+                title: 'Grado del polinomio',
                 description:
-                    'Define el <b>exponente más alto</b> del polinomio.<br><br>' +
-                    'Ejemplo: para <code>3x⁴ - x³ + 2x - 5</code>, el grado es <b>4</b>.<br><br>' +
-                    'Al cambiar el grado, el sistema genera automáticamente los campos para ingresar los coeficientes a₄, a₃, a₂, a₁, a₀.',
+                    'El exponente más alto del polinomio. ' +
+                    'Al cambiar este valor, el sistema genera los campos de coeficientes correspondientes.',
                 side: 'bottom'
             }
         },
         {
             element: '#tol-pol',
             popover: {
-                title: '3️⃣ Tolerancia',
+                title: 'Tolerancia',
                 description:
-                    'Error relativo porcentual de parada.<br><br>' +
-                    'Valores típicos: <code>1</code> (1%) para resultados rápidos, ' +
-                    '<code>0.001</code> (0.001%) para alta precisión.',
+                    'Error relativo porcentual de parada. ' +
+                    'Valores típicos: <code>1</code> para resultados rápidos, ' +
+                    '<code>0.001</code> para mayor precisión.',
                 side: 'bottom'
             }
         },
         {
             element: '#seccion-coeficientes',
             popover: {
-                title: '4️⃣ Coeficientes del Polinomio',
+                title: 'Coeficientes',
                 description:
-                    'Ingresa los coeficientes de mayor a menor grado:<br><br>' +
-                    'Para <code>P(x) = 2x³ - x² + 4x - 8</code>:<br>' +
-                    '• a₃ = <code>2</code><br>' +
-                    '• a₂ = <code>-1</code><br>' +
-                    '• a₁ = <code>4</code><br>' +
-                    '• a₀ = <code>-8</code><br><br>' +
-                    '⚠️ Si un término no existe, ingresa <code>0</code>.',
+                    'Ingresa los coeficientes de mayor a menor grado.<br><br>' +
+                    'Para <code>2x³ − x² + 4x − 8</code> sería: ' +
+                    'a₃ = 2, a₂ = −1, a₁ = 4, a₀ = −8.<br>' +
+                    'Si un término no existe, escribe <code>0</code>.',
                 side: 'top'
             }
         },
         {
             element: '#campos-dinamicos-pol',
             popover: {
-                title: '5️⃣ Valores Iniciales (según método)',
+                title: 'Valores iniciales',
                 description:
-                    '• <b>Bairstow</b> → r₀ y s₀ opcionales (el sistema elige automáticamente si se dejan vacíos)<br>' +
-                    '• <b>Müller</b> → 3 puntos iniciales x₀, x₁, x₂<br>' +
-                    '• <b>Horner-Newton</b> → Un valor inicial r₀ (puede ser complejo, ej: <code>1+2j</code>)',
+                    'Bairstow acepta r₀ y s₀ opcionales — si se dejan vacíos el sistema elige automáticamente.<br>' +
+                    'Müller requiere tres puntos x₀, x₁, x₂.<br>' +
+                    'Horner-Newton requiere un valor inicial r₀ ' +
+                    '(puede ser complejo, por ejemplo <code>1+2j</code>).',
                 side: 'top'
             }
         },
         {
             element: '.form-actions',
             popover: {
-                title: '6️⃣ Ejecutar',
+                title: 'Calcular',
                 description:
-                    '• <b>Calcular</b> → El sistema itera, extrae raíces y muestra la tabla de convergencia.<br>' +
-                    '• <b>Limpiar</b> → Resetea todo incluyendo coeficientes y consola.',
-                side: 'top'
-            }
-        },
-        {
-            element: '#thead-pol',
-            popover: {
-                title: '📋 Tabla de Convergencia',
-                description:
-                    'Muestra cómo el método converge hacia cada raíz:<br><br>' +
-                    '• <b>Bairstow</b> → Iteraciones de r y s (coeficientes del factor cuadrático)<br>' +
-                    '• <b>Müller</b> → Parabola ajustada en cada paso con xi, xi+1<br>' +
-                    '• <b>Horner-Newton</b> → División sintética iterativa (esquema de Horner)',
+                    'El sistema realiza las iteraciones y muestra la tabla de convergencia. ' +
+                    'En la consola inferior aparecen las raíces finales con sus valores reales e imaginarios.',
                 side: 'top'
             }
         },
         {
             element: '#consola-pol',
             popover: {
-                title: '🖥️ Consola de Resultados',
+                title: 'Consola de resultados',
                 description:
-                    'Aquí aparecen las <b>raíces finales encontradas</b> junto con el proceso detallado:<br><br>' +
-                    '• Para raíces reales: <code>x = 2.5000</code><br>' +
-                    '• Para raíces complejas: <code>x = 1.2 + 3.5j</code> y su conjugada <code>x = 1.2 - 3.5j</code>',
+                    'Muestra las raíces finales encontradas. ' +
+                    'Las raíces complejas aparecen en pares conjugados: ' +
+                    '<code>1.2 + 3.5j</code> y <code>1.2 − 3.5j</code>.',
                 side: 'top'
             }
         },
     ];
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PÁGINA: SISTEMAS NO LINEALES
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── SISTEMAS NO LINEALES ─────────────────────────────────────────────────────
 function stepsSistemas() {
     return [
         {
             popover: {
-                title: '🔗 Sistemas No Lineales',
+                title: 'Sistemas no lineales',
                 description:
-                    'Resuelve sistemas de <b>n ecuaciones no lineales con n variables</b> usando ' +
-                    '<b>Newton-Raphson Multivariable</b>.<br><br>' +
-                    'Ejemplo para n=2:<br>' +
-                    '<code>f₁(x,y) = x² + y² - 4 = 0</code><br>' +
-                    '<code>f₂(x,y) = x - y + 1 = 0</code><br><br>' +
-                    'El sistema calcula la <b>matriz Jacobiana</b> automáticamente usando SymPy.',
+                    'Resuelve sistemas de n ecuaciones con n variables usando ' +
+                    'Newton-Raphson multivariable. El sistema calcula automáticamente ' +
+                    'la matriz Jacobiana (derivadas parciales) en cada iteración.',
             }
         },
         {
             element: '#n-sis',
             popover: {
-                title: '1️⃣ Número de Variables (n)',
+                title: 'Número de variables',
                 description:
-                    'Define cuántas ecuaciones y variables tiene el sistema.<br><br>' +
-                    '• Mínimo: <b>2</b> variables<br>' +
-                    '• Máximo: <b>10</b> variables<br><br>' +
-                    'Al cambiar este valor, el sistema genera automáticamente los campos para las n ecuaciones y sus n valores iniciales.',
-                side: 'bottom'
-            }
-        },
-        {
-            element: '#angulo-sis',
-            popover: {
-                title: '2️⃣ Sistema de Ángulos',
-                description:
-                    'Igual que en Ecuaciones No Lineales: si tus funciones usan ' +
-                    '<code>sin</code>, <code>cos</code>, etc., elige el sistema de ángulos.<br><br>' +
-                    'Por defecto usa <b>Radianes</b>.',
+                    'Define cuántas ecuaciones y variables tiene el sistema (mínimo 2, máximo 10). ' +
+                    'Al cambiar este valor se generan automáticamente los campos para cada función y valor inicial.',
                 side: 'bottom'
             }
         },
         {
             element: '#tol-sis',
             popover: {
-                title: '3️⃣ Tolerancia (Error)',
+                title: 'Tolerancia',
                 description:
-                    'El método para cuando el cambio máximo entre el vector X anterior y el nuevo es menor a este valor:<br><br>' +
-                    '<code>max(|X_nuevo - X|) &lt; tolerancia</code><br><br>' +
-                    'Valor típico: <code>0.001</code> o <code>0.0001</code>.',
+                    'El método se detiene cuando el cambio máximo entre el vector X anterior ' +
+                    'y el nuevo es menor a este valor: <code>max(|X_nuevo − X|) &lt; tol</code>.',
                 side: 'bottom'
             }
         },
         {
             element: '#iter-sis',
             popover: {
-                title: '4️⃣ Máximo de Iteraciones',
+                title: 'Máximo de iteraciones',
                 description:
-                    '<b>Obligatorio.</b> Limita el número de iteraciones para evitar bucles infinitos cuando el sistema diverge.<br><br>' +
-                    'Si el Jacobiano es singular en algún punto o el vector inicial está muy lejos de la solución, ' +
-                    'el método puede no converger. Este límite garantiza que el cálculo termine.<br><br>' +
-                    'Valor recomendado: <code>25</code> a <code>100</code>.',
+                    'Límite de seguridad para casos en que el sistema no converge. ' +
+                    'Si el Jacobiano se vuelve singular o el punto inicial está muy lejos ' +
+                    'de la solución, el método puede divergir. Este límite garantiza que pare.',
                 side: 'bottom'
             }
         },
         {
             element: '#container-sis',
             popover: {
-                title: '5️⃣ Ecuaciones y Valores Iniciales',
+                title: 'Ecuaciones y valores iniciales',
                 description:
-                    'Para cada ecuación fᵢ tienes dos campos:<br><br>' +
-                    '• <b>fᵢ</b> — La ecuación igualada a cero. Usa las variables que correspondan (x, y, z o x₁, x₂...).<br>' +
-                    '  Ejemplo: <code>x**2 + y**2 - 4</code><br><br>' +
-                    '• <b>xᵢ</b> — Valor inicial de esa variable. El método arranca desde aquí.<br>' +
-                    '  Ejemplo: <code>1.5</code><br><br>' +
-                    '⚠️ Mientras más cerca el valor inicial esté de la solución real, más rápido converge.',
+                    'Para cada ecuación fᵢ hay dos campos: la función igualada a cero ' +
+                    'y el valor inicial de esa variable.<br><br>' +
+                    'Ejemplo: <code>x**2 + y**2 - 4</code> con valor inicial <code>1.5</code>.<br><br>' +
+                    'Mientras más cerca esté el valor inicial de la solución real, más rápido converge.',
                 side: 'top'
             }
         },
         {
             element: '.form-actions',
             popover: {
-                title: '6️⃣ Calcular',
+                title: 'Calcular',
                 description:
-                    'Al hacer clic en <b>Calcular</b>, el sistema:<br><br>' +
-                    '1. Parsea todas las ecuaciones con SymPy<br>' +
-                    '2. Detecta las variables automáticamente<br>' +
-                    '3. Calcula la <b>matriz Jacobiana</b> (derivadas parciales) simbólicamente<br>' +
-                    '4. En cada iteración: invierte J y aplica <code>X_nuevo = X - J⁻¹·F(X)</code><br>' +
-                    '5. Para cuando el error máximo &lt; tolerancia',
-                side: 'top'
-            }
-        },
-        {
-            element: '#thead-sis',
-            popover: {
-                title: '📋 Tabla de Iteraciones',
-                description:
-                    'Cada columna es una variable del sistema:<br><br>' +
-                    '• <b>Iteración</b> — Número de paso<br>' +
-                    '• <b>x, y, z...</b> — Valor de cada variable en esa iteración<br>' +
-                    '• <b>Error</b> — Máximo cambio entre iteraciones consecutivas<br><br>' +
-                    'La solución converge cuando todos los valores se estabilizan.',
+                    'El sistema parsea las ecuaciones, detecta las variables automáticamente, ' +
+                    'construye el Jacobiano simbólico con SymPy y ejecuta las iteraciones de Newton.',
                 side: 'top'
             }
         },
         {
             element: '#consola-sis',
             popover: {
-                title: '🖥️ Registro y Solución Final',
+                title: 'Registro y solución',
                 description:
-                    'Muestra el proceso completo en formato de consola:<br><br>' +
-                    '• Las <b>matrices Jacobianas</b> en cada iteración<br>' +
-                    '• La <b>solución final</b>: x₁ = ..., x₂ = ...<br>' +
-                    '• Si no converge, indica en qué iteración el Jacobiano se volvió singular.',
-                side: 'top'
-            }
-        },
-        {
-            element: '#btn-exportar-sis',
-            popover: {
-                title: '📥 Exportar a Excel',
-                description:
-                    'Descarga la tabla de iteraciones como archivo <b>CSV</b> para analizarla en Excel.',
+                    'Muestra el proceso completo: la Jacobiana evaluada en cada iteración ' +
+                    'y la solución final con los valores de cada variable.',
                 side: 'top'
             }
         },
     ];
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// FALLBACK
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── FALLBACK ─────────────────────────────────────────────────────────────────
 function stepsGenerico() {
-    return [
-        {
-            popover: {
-                title: '🧭 Explora la Suite Numérica',
-                description:
-                    'Usa el menú superior para navegar a uno de los tres módulos y obtener ' +
-                    'un tutorial detallado de ese módulo específico.',
-            }
+    return [{
+        popover: {
+            title: 'Suite Numérica Pro',
+            description: 'Usa el menú superior para navegar a uno de los módulos y ver el tutorial de esa sección.'
         }
-    ];
+    }];
 }
