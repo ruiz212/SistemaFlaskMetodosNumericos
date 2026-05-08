@@ -12,11 +12,11 @@
     gap: 20px;
 }
 
-/* Layout para separar la tabla (izquierda) de la consola (derecha) */
+/* Layout para apilar la tabla arriba y la consola abajo y maximizar ancho */
 .grid-layout {
     display: flex;
+    flex-direction: column;
     gap: 24px;
-    flex-wrap: wrap; /* En pantallas pequeñas se pone uno debajo del otro */
 }
 
 /* Puedes agregar más estilos específicos de polinomios aquí */

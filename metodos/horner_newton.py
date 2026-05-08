@@ -11,7 +11,16 @@ def metodo_horner_newton(a_input, r, tol_porcentaje):
     resultados = []
     consola = []
     tol = tol_porcentaje / 100.0
-    consola.append("=== MÉTODO DE HORNER-NEWTON (BIRGE-VIETA) ===\\n")
+    consola.append("=== MÉTODO DE HORNER-NEWTON (BIRGE-VIETA) ===\n")
+    
+    n = len(a_input) - 1
+    
+    encabezados = ["Iteración", "r_n"]
+    for i in range(n, -1, -1):
+        encabezados.append(f"b_{i}")
+    for i in range(n, 0, -1):
+        encabezados.append(f"c_{i}")
+    encabezados.extend(["Error", "Condición"])
     
     max_iter = 100
     n = len(a_input) - 1
@@ -40,17 +49,24 @@ def metodo_horner_newton(a_input, r, tol_porcentaje):
         r_new = r - (p_r / p_prime_r)
         error = abs(r_new - r)
 
-        resultados.append({
-            'iter': iteracion, 'r': fmt_c(r), 'pr': fmt_c(p_r), 'ppr': fmt_c(p_prime_r), 'error': f"{error:.6f}"
-        })
+        fila = [str(iteracion), fmt_c(r)]
+        for i in range(n + 1):
+            fila.append(fmt_c(b[i]))
+        for i in range(n):
+            fila.append(fmt_c(c[i]))
+        
+        fila.append(f"{error:.6f}")
+        fila.append("Cumple" if error <= tol else "")
+        
+        resultados.append({'data': fila})
 
         r = r_new
         iteracion += 1
 
     if error <= tol:
         consola.append(f"Convergió en {iteracion-1} iteraciones.")
-        consola.append(f"=== RAÍZ ENCONTRADA ===\\n r = {fmt_c(r)}")
+        consola.append(f"=== RAÍZ ENCONTRADA ===\n r = {fmt_c(r)}")
     else:
         consola.append("Error: divergencia o se alcanzó el límite máximo de iteraciones sin converger.")
         
-    return {"resultados": resultados, "consola": consola}
+    return {"resultados": resultados, "consola": consola, "encabezados": encabezados}

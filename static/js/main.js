@@ -304,8 +304,8 @@ function renderTablaPol(resultados, metodo, encabezados) {
             return `<tr>${r.data.map(d => `<td>${d}</td>`).join('')}</tr>`;
         }).join('');
     } else if (metodo === 'Horner-Newton') {
-        thead.innerHTML = `<tr><th>It</th><th>r</th><th>P(r) [b_0]</th><th>P'(r) [C_1]</th><th>Error</th></tr>`;
-        tbody.innerHTML = resultados.map(r => `<tr><td>${r.iter}</td><td>${r.r}</td><td>${r.pr}</td><td>${r.ppr}</td><td>${r.error}</td></tr>`).join('');
+        thead.innerHTML = `<tr>${encabezados.map(h => `<th>${h}</th>`).join('')}</tr>`;
+        tbody.innerHTML = resultados.map(r => `<tr>${r.data.map(d => `<td>${d}</td>`).join('')}</tr>`).join('');
     }
 }
 
