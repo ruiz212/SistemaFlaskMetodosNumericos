@@ -429,40 +429,66 @@
 })();
 
 /* ============================================================
-   ANIMACIONES DE ENTRADA — reveal-up secuencial con IntersectionObserver
+   ANIMACIONES ON-SCROLL — Sincronizadas con Anime.js 
+   (Simulando la nueva función onScroll de Anime v4)
    ============================================================ */
 (function() {
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry, i) => {
-            if (entry.isIntersecting) {
-                setTimeout(() => {
-                    anime({
-                        targets: entry.target,
-                        translateY: [40, 0],
-                        opacity: [0, 1],
-                        duration: 900,
-                        easing: 'easeOutExpo'
-                    });
-                }, entry.target.dataset.delay || 0);
-                observer.unobserve(entry.target);
-            }
+    const elements = document.querySelectorAll('.reveal-up');
+    const scrollAnimations = [];
+
+    // Crear una instancia pausada de anime.js para cada elemento
+    elements.forEach((el, index) => {
+        // Obtenemos un delay ficticio del DOM si existe, para alterar el rango de scroll
+        const delayOffset = el.dataset.delay ? parseInt(el.dataset.delay) / 10 : 0;
+        
+        const anim = anime({
+            targets: el,
+            translateY: [60, 0],
+            opacity: [0, 1],
+            scale: [0.95, 1],
+            duration: 1000,
+            easing: 'linear', // Linear es importante para que el scroll se sienta 1:1
+            autoplay: false
         });
-    }, { threshold: 0.1 });
-
-    // Asignar delays escalonados por grupo
-    let heroDelay = 0;
-    document.querySelectorAll('.hero-content .reveal-up').forEach(el => {
-        el.dataset.delay = heroDelay;
-        heroDelay += 120;
-        observer.observe(el);
+        scrollAnimations.push({ el, anim, delayOffset });
     });
 
-    let scrollDelay = 0;
-    document.querySelectorAll('.methods-section .reveal-up, .highlight-section .reveal-up, .authors-section .reveal-up').forEach(el => {
-        el.dataset.delay = scrollDelay % 300;
-        scrollDelay += 80;
-        observer.observe(el);
-    });
+    function onScroll() {
+        const windowHeight = window.innerHeight;
+        
+        scrollAnimations.forEach(({ el, anim, delayOffset }) => {
+            const rect = el.getBoundingClientRect();
+            
+            // Punto de inicio: cuando el top del elemento entra por la parte baja de la pantalla
+            const startVisible = windowHeight;
+            // Punto final: cuando el elemento ha subido cierta cantidad de píxeles (se completa la anim)
+            // Agregamos delayOffset para hacer un efecto escalonado al scrollear
+            const endVisible = windowHeight - 250 - delayOffset; 
+            
+            let progress = (startVisible - rect.top) / (startVisible - endVisible);
+            
+            // Limitar entre 0 y 1
+            progress = Math.max(0, Math.min(1, progress));
+            
+            // Buscar (scrub) el frame exacto de la animación
+            anim.seek(anim.duration * progress);
+        });
+    }
+
+    // Escuchar el evento de scroll con un pequeño throttle nativo por requestAnimationFrame
+    let isTicking = false;
+    window.addEventListener('scroll', () => {
+        if (!isTicking) {
+            window.requestAnimationFrame(() => {
+                onScroll();
+                isTicking = false;
+            });
+            isTicking = true;
+        }
+    }, { passive: true });
+
+    // Ejecutar una vez al cargar para los elementos que ya están en pantalla
+    onScroll();
 })();
 </script>
 {% endblock %}
