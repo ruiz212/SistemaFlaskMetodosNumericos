@@ -313,8 +313,8 @@ function renderTablaPol(resultados, metodo, encabezados) {
     const tbody = document.getElementById('tbody-pol');
     
     if (metodo === 'Müller') {
-        thead.innerHTML = `<tr><th>i</th><th>X_i</th><th>X_{i+1}</th><th>h_i</th><th>h_{i+1}</th><th>f(X_i)</th><th>f(X_{i+1})</th><th>δ_i</th><th>δ_{i+1}</th><th>a</th><th>b</th><th>c</th><th>b+√</th><th>b-√</th><th>Error %</th></tr>`;
-        tbody.innerHTML = resultados.map(r => `<tr><td>${r.iter}</td><td>${r.x1}</td><td>${r.x2}</td><td>${r.h0}</td><td>${r.h1}</td><td>${r.f1}</td><td>${r.f2}</td><td>${r.d0}</td><td>${r.d1}</td><td>${r.a}</td><td>${r.b}</td><td>${r.c}</td><td>${r.b_plus}</td><td>${r.b_minus}</td><td>${r.error}</td></tr>`).join('');
+        thead.innerHTML = `<tr><th>i</th><th>X_i</th><th>X_{i+1}</th><th>h_i</th><th>h_{i+1}</th><th>f(X_i)</th><th>f(X_{i+1})</th><th>δ_i</th><th>δ_{i+1}</th><th>a</th><th>b</th><th>c</th><th>b+√</th><th>b-√</th><th>Error %</th><th>Continuar</th></tr>`;
+        tbody.innerHTML = resultados.map(r => `<tr><td>${r.iter}</td><td>${r.x1}</td><td>${r.x2}</td><td>${r.h0}</td><td>${r.h1}</td><td>${r.f1}</td><td>${r.f2}</td><td>${r.d0}</td><td>${r.d1}</td><td>${r.a}</td><td>${r.b}</td><td>${r.c}</td><td>${r.b_plus}</td><td>${r.b_minus}</td><td>${r.error}</td><td>${r.condicion}</td></tr>`).join('');
     } else if (metodo === 'Bairstow') {
         thead.innerHTML = `<tr>${encabezados.map(h => `<th>${h}</th>`).join('')}</tr>`;
         tbody.innerHTML = resultados.map(r => {
