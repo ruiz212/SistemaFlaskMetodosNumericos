@@ -7,7 +7,7 @@ def regla_falsa(a, b, tol, f):
         return {"error": "No hay cambio de signo entre a y b."}
     
     c_anterior = 0
-    i = 1
+    i = 0
     raiz_encontrada = None
     while True:
         fa, fb = f(a), f(b)
@@ -16,8 +16,8 @@ def regla_falsa(a, b, tol, f):
         fc = f(c_actual)
         prueba_signo = fa * fc
         
-        error_rp = abs((c_actual - c_anterior) / c_actual) * 100.0 if (i > 1 and c_actual != 0) else 100.0
-        error_str = f"{error_rp:.6f}%" if i > 1 else "---"
+        error_rp = abs((c_actual - c_anterior) / c_actual) * 100.0 if (i > 0 and c_actual != 0) else 100.0
+        error_str = f"{error_rp:.6f}%" if i > 0 else "---"
         
         resultados.append({
             'iter': i, 'a': f"{a:.6f}", 'b': f"{b:.6f}", 'c': f"{c_actual:.6f}",
@@ -25,7 +25,7 @@ def regla_falsa(a, b, tol, f):
             'prueba': f"{prueba_signo:.6f}", 'error': error_str
         })
         
-        if (i > 1 and error_rp < tol) or fc == 0:
+        if (i > 0 and error_rp < tol) or fc == 0:
             raiz_encontrada = c_actual
             break
             

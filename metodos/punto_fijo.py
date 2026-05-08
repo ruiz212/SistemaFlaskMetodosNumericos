@@ -3,19 +3,19 @@ def punto_fijo(x0, tol, f, force=False, g_prima=None):
         return {"warning": f"|g'(x0)|={abs(g_prima):.4f} >= 1. ¿Continuar?"}
         
     resultados = []
-    x_actual, iteracion = x0, 1
+    x_actual, iteracion = x0, 0
     raiz_encontrada = None
     while True:
         x_nuevo = f(x_actual)
         if x_nuevo is None: return {"error": "Error desbordamiento."}
-        error_rp = abs((x_nuevo - x_actual) / x_nuevo) * 100.0 if (iteracion > 1 and x_nuevo != 0) else 100.0
-        error_str = f"{error_rp:.6f}%" if iteracion > 1 else "---"
+        error_rp = abs((x_nuevo - x_actual) / x_nuevo) * 100.0 if (iteracion > 0 and x_nuevo != 0) else 100.0
+        error_str = f"{error_rp:.6f}%" if iteracion > 0 else "---"
         
         resultados.append({
             'iter': iteracion, 'ci': f"{x_actual:.6f}", 'gci': f"{x_nuevo:.6f}", 'error': error_str
         })
         
-        if (iteracion > 1 and error_rp < tol) or x_actual == x_nuevo:
+        if (iteracion > 0 and error_rp < tol) or x_actual == x_nuevo:
             raiz_encontrada = x_nuevo
             break
         x_actual, iteracion = x_nuevo, iteracion + 1

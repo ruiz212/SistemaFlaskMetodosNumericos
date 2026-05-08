@@ -104,34 +104,43 @@ def calcular_pol():
     a_input = data.get('coeficientes', [])
     tol_str = data.get('tol', '')
     
-    if not a_input:
-        return jsonify({'error': 'Faltan coeficientes.'})
-        
     try:
         tol_porcentaje = float(tol_str)
-        a_input = [float(x) for x in a_input]
     except ValueError:
-        return jsonify({'error': 'Valores o tolerancia inválidos.'})
-        
+        return jsonify({'error': 'Tolerancia inválida.'})
+    
     try:
         if metodo == "Müller":
+            ecuacion = data.get('ecuacion', '').strip()
+            if not ecuacion:
+                return jsonify({'error': 'Ingresa una ecuación.'})
+                
+            exito, msg, x_sym, expr_simbolica, derivada_simbolica, funcion_eval, derivada_eval = compilar_funciones(ecuacion, 'rad')
+            if not exito:
+                return jsonify({'error': f"Error en la sintaxis de la ecuación: {msg}"})
+                
+            def f(v): return evaluar_f(v, expr_simbolica, x_sym, funcion_eval)
+            
             x0 = float(data.get('x0'))
             x1 = float(data.get('x1'))
             x2 = float(data.get('x2'))
-            res = metodo_muller(a_input[::-1], x0, x1, x2, tol_porcentaje)
-                    
-        elif metodo == "Bairstow":
-            r0 = data.get('r0')
-            s0 = data.get('s0')
-            res = metodo_bairstow(a_input, tol_porcentaje, r0, s0)
-
-        elif metodo == "Horner-Newton":
-            r0_str = data.get('r0')
-            try:
-                r = complex(r0_str) if 'j' in r0_str else float(r0_str)
-            except ValueError:
-                return jsonify({'error': 'Valor inicial inválido.'})
-            res = metodo_horner_newton(a_input, r, tol_porcentaje)
+            res = metodo_muller(x0=x0, x1=x1, x2=x2, tol_porcentaje=tol_porcentaje, f_eval_ext=f)
+        else:
+            if not a_input:
+                return jsonify({'error': 'Faltan coeficientes.'})
+            a_input = [float(x) for x in a_input]
+            
+            if metodo == "Bairstow":
+                r0 = data.get('r0')
+                s0 = data.get('s0')
+                res = metodo_bairstow(a_input, tol_porcentaje, r0, s0)
+            elif metodo == "Horner-Newton":
+                r0_str = data.get('r0')
+                try:
+                    r = complex(r0_str) if 'j' in r0_str else float(r0_str)
+                except ValueError:
+                    return jsonify({'error': 'Valor inicial inválido.'})
+                res = metodo_horner_newton(a_input, r, tol_porcentaje)
             
         if "error" in res:
             return jsonify({'error': res["error"], 'consola': "\n".join(res.get("consola", []))})

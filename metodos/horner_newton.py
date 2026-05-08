@@ -26,7 +26,7 @@ def metodo_horner_newton(a_input, r, tol_porcentaje):
     n = len(a_input) - 1
     a = a_input
     
-    iteracion = 1
+    iteracion = 0
     error = float('inf')
     
     while error > tol and iteracion <= max_iter:

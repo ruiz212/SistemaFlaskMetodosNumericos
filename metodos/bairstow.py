@@ -20,7 +20,7 @@ def metodo_bairstow(a_input, tol_porcentaje, r0_manual=None, s0_manual=None):
     encabezados = ['Iter']
     for i in range(grado_inicial, -1, -1): encabezados.append(f'b_{i}')
     for i in range(grado_inicial, 0, -1): encabezados.append(f'c_{i}')
-    encabezados.extend(['Δr', 'Δs', 'r', 's', 'Err_r(%)', 'Err_s(%)', 'X1', 'X2'])
+    encabezados.extend(['Δr', 'Δs', 'r', 's', 'Err_r(%)', 'Err_s(%)', 'X1', 'X2', 'Condición'])
     
     consola.append(f"=== INICIANDO BAIRSTOW (Grado {n}) ===")
     
@@ -32,7 +32,8 @@ def metodo_bairstow(a_input, tol_porcentaje, r0_manual=None, s0_manual=None):
             tipo = "MANUALES"
             usar_manual = False
         else:
-            if abs(a[0]) < abs(a[n]):
+            # Por defecto usar Pequeñas a menos que a[2] sea 0, para priorizar raíces pequeñas y coincidir con la clase
+            if a[2] != 0:
                 r, s = a[1]/a[2], a[0]/a[2]
                 tipo = "PEQUEÑAS"
             else:
@@ -44,7 +45,7 @@ def metodo_bairstow(a_input, tol_porcentaje, r0_manual=None, s0_manual=None):
             
         consola.append(f"\nPolinomio Grado {n}. Usando fór. {tipo} (r0={r:.4f}, s0={s:.4f})")
         
-        for it in range(1, max_iter + 1):
+        for it in range(0, max_iter):
             b = [0.0] * (n + 1)
             c = [0.0] * (n + 1)
             
@@ -79,16 +80,20 @@ def metodo_bairstow(a_input, tol_porcentaje, r0_manual=None, s0_manual=None):
             fila = [str(it)]
             for i in range(grado_inicial, -1, -1): fila.append(f"{b[i]:.4f}" if i <= n else "0.0")
             for i in range(grado_inicial, 0, -1): fila.append(f"{c[i]:.4f}" if i <= n else "0.0")
+            err_r_str = f"{err_r:.4f}%" if it > 0 else "---"
+            err_s_str = f"{err_s:.4f}%" if it > 0 else "---"
+            
+            condicion = "Finalizar" if (it > 0 and err_r < tol_porcentaje and err_s < tol_porcentaje) else "Continuar"
+            
             fila.extend([f"{dr:.4f}", f"{ds:.4f}", f"{r_nuevo:.4f}", f"{s_nuevo:.4f}", 
-                            f"{err_r:.4f}%", f"{err_s:.4f}%", x1, x2])
+                            err_r_str, err_s_str, x1, x2, condicion])
             
             resultados.append({'is_sep': False, 'data': fila})
             
             r, s = r_nuevo, s_nuevo
             
-            # Criterio de paro del cuaderno: b0 y b1 aproximadamente cero
-            # o el error relativo es menor a la tolerancia
-            if (abs(b[0]) <= tol_porcentaje and abs(b[1]) <= tol_porcentaje) or (err_r < tol_porcentaje and err_s < tol_porcentaje):
+            # Criterio de paro exclusivo por error relativo de r y s
+            if it > 0 and err_r < tol_porcentaje and err_s < tol_porcentaje:
                 break
         
         raices_totales.extend([x1, x2])

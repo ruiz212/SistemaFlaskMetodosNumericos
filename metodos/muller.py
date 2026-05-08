@@ -7,13 +7,22 @@ def fmt_c(val):
         return f"{val.real:.5f}{'+' if val.imag >=0 else '-'}{abs(val.imag):.5f}j"
     return f"{val:.5f}"
 
-def metodo_muller(a_coefs, x0, x1, x2, tol_porcentaje):
+def metodo_muller(x0, x1, x2, tol_porcentaje, a_coefs=None, f_eval_ext=None):
     resultados = []
     consola = []
-    def f_eval(x_val):
-        return complex(sum(c_val * (x_val ** i) for i, c_val in enumerate(a_coefs)))
+    
+    if f_eval_ext is not None:
+        def f_eval(x_val):
+            val = f_eval_ext(x_val)
+            if val is None: raise ValueError("Error al evaluar la función.")
+            return complex(val)
+    elif a_coefs is not None:
+        def f_eval(x_val):
+            return complex(sum(c_val * (x_val ** i) for i, c_val in enumerate(a_coefs)))
+    else:
+        return {"error": "Se requieren coeficientes o una función evaluadora."}
         
-    iteracion = 1
+    iteracion = 0
     max_iter = 100
     consola.append("=== INICIANDO MÜLLER ===")
     
@@ -62,6 +71,7 @@ def metodo_muller(a_coefs, x0, x1, x2, tol_porcentaje):
         if error_rp < tol_porcentaje or abs(f3) == 0:
             consola.append(f"\\nConvergió en {iteracion} iteraciones.")
             consola.append(f"=== RAÍZ ENCONTRADA ===\\n X = {fmt_c(x3)}")
+            res_raiz = x3
             break
             
         x0, x1, x2 = x1, x2, x3
@@ -70,4 +80,5 @@ def metodo_muller(a_coefs, x0, x1, x2, tol_porcentaje):
             consola.append("Error: divergencia o límite de iteraciones.")
             return {"error": "Divergencia o límite de iteraciones.", "consola": consola}
             
-    return {"resultados": resultados, "consola": consola}
+    raiz_str = fmt_c(res_raiz) if 'res_raiz' in locals() else ""
+    return {"resultados": resultados, "consola": consola, "raiz": raiz_str, "mensaje": f"Müller finalizado | Raíz: {raiz_str}"}

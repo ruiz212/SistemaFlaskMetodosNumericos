@@ -18,9 +18,13 @@
                     <option value="Horner-Newton">Horner-Newton</option>
                 </select>
             </div>
-            <div class="input-group flex-1">
+            <div class="input-group flex-1" id="grupo-grado">
                 <label>Grado (n):</label>
                 <input type="number" id="grado-pol" value="3" min="1" max="20" class="input-control text-center" onchange="generarCamposCoeficientes()">
+            </div>
+            <div class="input-group flex-2" id="grupo-ecuacion-pol" style="display: none;">
+                <label>Ecuación f(x):</label>
+                <input type="text" id="ecuacion-pol" class="input-control" placeholder="Ej: sin(x) - 0.5">
             </div>
             <div class="input-group flex-1">
                 <label>Tol (%):</label>
@@ -36,7 +40,7 @@
             <!-- Puntos iniciales para Müller u Horner-Newton -->
         </div>
 
-        <div class="mt-4">
+        <div class="mt-4" id="seccion-coeficientes">
             <label class="section-label">Coeficientes a_n → a_0:</label>
             <div class="dynamic-grid" id="container-coefs" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));">
                 <!-- Se llenan dinámicamente -->

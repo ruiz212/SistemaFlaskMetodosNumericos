@@ -214,58 +214,76 @@ function actualizarCamposPol() {
     const metodo = document.getElementById('metodo-pol');
     if (!metodo) return;
     const container = document.getElementById('campos-dinamicos-pol');
+    const seccionCoefs = document.getElementById('seccion-coeficientes');
+    const grupoGrado = document.getElementById('grupo-grado');
+    const grupoEq = document.getElementById('grupo-ecuacion-pol');
     container.innerHTML = '';
     
     if (metodo.value === 'Müller') {
+        if(seccionCoefs) seccionCoefs.style.display = 'none';
+        if(grupoGrado) grupoGrado.style.display = 'none';
+        if(grupoEq) grupoEq.style.display = 'flex';
+        
         container.innerHTML = `
             <div class="input-group flex-1"><label>x0:</label><input type="text" id="pol-x0" class="input-control"></div>
             <div class="input-group flex-1"><label>x1:</label><input type="text" id="pol-x1" class="input-control"></div>
             <div class="input-group flex-1"><label>x2:</label><input type="text" id="pol-x2" class="input-control"></div>
         `;
-    } else if (metodo.value === 'Horner-Newton') {
-        container.innerHTML = `
-            <div class="input-group flex-1"><label>Valor inicial (r0):</label><input type="text" id="pol-r0" class="input-control"></div>
-        `;
-    } else if (metodo.value === 'Bairstow') {
-        container.innerHTML = `
-            <div class="input-group flex-1"><label>r0 (opcional):</label><input type="text" id="pol-r0-bair" class="input-control" placeholder="Automático"></div>
-            <div class="input-group flex-1"><label>s0 (opcional):</label><input type="text" id="pol-s0-bair" class="input-control" placeholder="Automático"></div>
-        `;
+    } else {
+        if(seccionCoefs) seccionCoefs.style.display = 'block';
+        if(grupoGrado) grupoGrado.style.display = 'flex';
+        if(grupoEq) grupoEq.style.display = 'none';
+        
+        if (metodo.value === 'Horner-Newton') {
+            container.innerHTML = `
+                <div class="input-group flex-1"><label>Valor inicial (r0):</label><input type="text" id="pol-r0" class="input-control"></div>
+            `;
+        } else if (metodo.value === 'Bairstow') {
+            container.innerHTML = `
+                <div class="input-group flex-1"><label>r0 (opcional):</label><input type="text" id="pol-r0-bair" class="input-control" placeholder="Automático"></div>
+                <div class="input-group flex-1"><label>s0 (opcional):</label><input type="text" id="pol-s0-bair" class="input-control" placeholder="Automático"></div>
+            `;
+        }
     }
 }
 
 async function calcularPol() {
     const metodo = document.getElementById('metodo-pol').value;
-    const grado = parseInt(document.getElementById('grado-pol').value);
     const tol = document.getElementById('tol-pol').value;
     
-    const coeficientes = [];
-    for (let i = grado; i >= 0; i--) {
-        const val = document.getElementById(`coef-${i}`).value;
-        if (val === '') return showAlert('Atención', `Llene el coeficiente a_${i}`, 'warning');
-        try {
-            // Evaluamos con math.js por si ponen fracciones o pi
-            coeficientes.push(math.evaluate(val));
-        } catch(e) {
-            return showAlert('Error', `Sintaxis inválida en a_${i}`, 'error');
-        }
-    }
-    
-    const payload = { metodo, coeficientes, tol };
+    const payload = { metodo, tol };
     
     if (metodo === 'Müller') {
+        const ecuacion = document.getElementById('ecuacion-pol').value;
+        if (!ecuacion) return showAlert('Atención', 'Ingresa una ecuación.', 'warning');
+        payload.ecuacion = ecuacion;
         payload.x0 = document.getElementById('pol-x0').value;
         payload.x1 = document.getElementById('pol-x1').value;
         payload.x2 = document.getElementById('pol-x2').value;
         if(!payload.x0 || !payload.x1 || !payload.x2) return showAlert('Atención', 'Llene x0, x1 y x2', 'warning');
-    } else if (metodo === 'Horner-Newton') {
-        payload.r0 = document.getElementById('pol-r0').value;
-        if(!payload.r0) return showAlert('Atención', 'Llene r0', 'warning');
-    } else if (metodo === 'Bairstow') {
-        const r0_bair = document.getElementById('pol-r0-bair');
-        const s0_bair = document.getElementById('pol-s0-bair');
-        if (r0_bair && r0_bair.value !== '') payload.r0 = r0_bair.value;
-        if (s0_bair && s0_bair.value !== '') payload.s0 = s0_bair.value;
+    } else {
+        const grado = parseInt(document.getElementById('grado-pol').value);
+        const coeficientes = [];
+        for (let i = grado; i >= 0; i--) {
+            const val = document.getElementById(`coef-${i}`).value;
+            if (val === '') return showAlert('Atención', `Llene el coeficiente a_${i}`, 'warning');
+            try {
+                coeficientes.push(math.evaluate(val));
+            } catch(e) {
+                return showAlert('Error', `Sintaxis inválida en a_${i}`, 'error');
+            }
+        }
+        payload.coeficientes = coeficientes;
+        
+        if (metodo === 'Horner-Newton') {
+            payload.r0 = document.getElementById('pol-r0').value;
+            if(!payload.r0) return showAlert('Atención', 'Llene r0', 'warning');
+        } else if (metodo === 'Bairstow') {
+            const r0_bair = document.getElementById('pol-r0-bair');
+            const s0_bair = document.getElementById('pol-s0-bair');
+            if (r0_bair && r0_bair.value !== '') payload.r0 = r0_bair.value;
+            if (s0_bair && s0_bair.value !== '') payload.s0 = s0_bair.value;
+        }
     }
     
     const res = await fetch('/api/calcular_pol', {
@@ -312,12 +330,14 @@ function renderTablaPol(resultados, metodo, encabezados) {
 function limpiarPol() {
     animarLimpieza(() => {
         document.getElementById('tol-pol').value = '';
+        if (document.getElementById('ecuacion-pol')) document.getElementById('ecuacion-pol').value = '';
         const coefs = document.querySelectorAll('[id^="coef-"]');
         coefs.forEach(c => c.value = '');
         document.getElementById('thead-pol').innerHTML = '';
         document.getElementById('tbody-pol').innerHTML = '';
         document.getElementById('consola-pol').value = '';
         document.getElementById('btn-exportar-pol').disabled = true;
+        actualizarCamposPol();
     });
 }
 
