@@ -65,6 +65,11 @@ def resolver_sistema_no_lineal(n, funciones_txt, valores_x, tol, max_iter, modo_
             consola.append(f"Error evaluando funciones en iteración {iteracion}: {e}")
             return {"error": f"Error de evaluación: {str(e)}", "consola": consola}
 
+        consola.append(f"\\n--- Iteración {iteracion} ---")
+        consola.append("Jacobiana:")
+        for row in J_val:
+            consola.append("  [ " + "  ".join([f"{val:9.4f}" for val in row]) + " ]")
+
         try:
             J_inv = np.linalg.inv(J_val)
         except np.linalg.LinAlgError:
