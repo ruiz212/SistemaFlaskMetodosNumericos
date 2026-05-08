@@ -107,8 +107,8 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Chart.js para la gráfica -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Chart.js local (no requiere internet) -->
+<script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
 <!-- Módulo de gráfica animada -->
 <script src="{{ url_for('static', filename='js/grafica_nl.js') }}"></script>
 
