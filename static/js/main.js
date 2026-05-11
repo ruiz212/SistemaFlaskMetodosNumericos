@@ -126,14 +126,14 @@ let _mathPreviewTimer = null;
 
 function previewMath(inputId) {
     const input = document.getElementById(inputId);
-    const hud = document.getElementById('math-hud');
-    if (!input || !hud) return;
+    const preview = document.getElementById('preview-' + inputId);
+    if (!input || !preview) return;
 
     clearTimeout(_mathPreviewTimer);
     const text = input.value.trim();
 
     if (!text) {
-        hud.classList.remove('active');
+        preview.classList.remove('active');
         return;
     }
 
@@ -156,22 +156,21 @@ function previewMath(inputId) {
                 .replace(/\\exp/g, 'e^{') 
                 .replace(/e\^\{([^}]+)\}/g, (m, p1) => `e^{${p1}}`);
 
-            hud.classList.add('active');
-            katex.render(latex, hud, {
+            preview.classList.add('active');
+            katex.render(latex, preview, {
                 throwOnError: false,
                 displayMode: true
             });
         } catch (e) {
             // Fallback para cuando la expresión está incompleta
-            hud.classList.add('active');
-            hud.innerHTML = `<small style="opacity:0.5; font-size:0.7rem; letter-spacing:1px;">CONSTRUYENDO ECUACIÓN...</small>`;
+            preview.classList.add('active');
+            preview.innerHTML = `<small style="opacity:0.5; font-size:0.7rem; letter-spacing:1px;">CONSTRUYENDO...</small>`;
         }
     }, 150);
 }
 
 function hideMathPreview() {
-    const hud = document.getElementById('math-hud');
-    if (hud) hud.classList.remove('active');
+    document.querySelectorAll('.math-preview').forEach(p => p.classList.remove('active'));
 }
 
 /**
@@ -489,9 +488,10 @@ function generarCamposSistemas() {
     
     container.innerHTML = Array.from({length: n}, (_, i) => i + 1).map(i => `
         <div class="system-eq-card" style="opacity: 0;">
-            <div class="eq-row">
+            <div class="eq-row input-group">
                 <span class="eq-label">f_${i}:</span>
                 <input type="text" id="sis-f-${i}" placeholder="f_${i}(x...) = 0" class="input-control" oninput="previewMath('sis-f-${i}')">
+                <div class="math-preview" id="preview-sis-f-${i}"></div>
             </div>
             <div class="eq-row">
                 <span class="eq-label alt">x_${i} init:</span>
@@ -550,11 +550,17 @@ async function calcularSis() {
 }
 
 async function graficarSis3D(funciones) {
-    const data = await performRequest('/api/grafica_sis_3d', { funciones });
-    if (data.error) return;
-
     const section = document.getElementById('grafica-3d-seccion');
-    if (section) section.style.display = 'block';
+    if (section) {
+        section.style.display = 'block';
+        section.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    const data = await performRequest('/api/grafica_sis_3d', { funciones });
+    if (data.error) {
+        if (section) section.style.display = 'none';
+        return;
+    }
 
     const traces = data.Z.map((z, i) => ({
         z: z,
@@ -577,6 +583,27 @@ async function graficarSis3D(funciones) {
         colorscale: [[0, 'gray'], [1, 'gray']]
     });
 
+    // Si tenemos resultados, marcamos la raíz encontrada
+    const tbody = document.getElementById('tbody-sis');
+    if (tbody && tbody.rows.length > 0) {
+        const lastRow = tbody.rows[tbody.rows.length - 1];
+        const x1 = parseFloat(lastRow.cells[1].textContent);
+        const x2 = parseFloat(lastRow.cells[2].textContent);
+        
+        traces.push({
+            x: [x1], y: [x2], z: [0],
+            mode: 'markers',
+            type: 'scatter3d',
+            name: 'Raíz Encontrada',
+            marker: {
+                size: 8,
+                color: '#10b981',
+                symbol: 'diamond',
+                line: { color: '#fff', width: 2 }
+            }
+        });
+    }
+
     Plotly.newPlot('plotly-3d', traces, {
         title: 'Superficies del Sistema',
         autosize: true,
@@ -597,6 +624,9 @@ function limpiarSis() {
         generarCamposSistemas();
         document.getElementById('thead-sis').innerHTML = '';
         document.getElementById('tbody-sis').innerHTML = '';
+        const section = document.getElementById('grafica-3d-seccion');
+        if (section) section.style.display = 'none';
+        
         document.getElementById('consola-sis').value = '';
         document.getElementById('btn-exportar-sis').disabled = true;
     });

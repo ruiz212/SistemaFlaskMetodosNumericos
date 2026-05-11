@@ -11,7 +11,10 @@ from metodos.bairstow import metodo_bairstow
 from metodos.horner_newton import metodo_horner_newton
 from metodos.sistemas import resolver_sistema_no_lineal
 from metodos.grafica_nl import generar_datos_grafica
-from metodos.sistemas_lineales import eliminacion_gaussiana, factorizacion_lu
+from metodos.sistemas_lineales import (
+    eliminacion_gaussiana, factorizacion_lu, 
+    regla_de_cramer, gauss_jordan, matriz_inversa
+)
 
 app = Flask(__name__)
 
@@ -230,6 +233,12 @@ def calcular_sis_lin():
         res = eliminacion_gaussiana(A, b)
     elif metodo == "Factorización LU":
         res = factorizacion_lu(A, b)
+    elif metodo == "Regla de Cramer":
+        res = regla_de_cramer(A, b)
+    elif metodo == "Gauss-Jordan":
+        res = gauss_jordan(A, b)
+    elif metodo == "Matriz Inversa":
+        res = matriz_inversa(A, b)
     else:
         return jsonify({'error': 'Método no soportado'})
         
@@ -251,7 +260,8 @@ def grafica_sis_3d():
     res = []
     for f_text in funciones:
         try:
-            expr = sp.sympify(f_text, locals={'x1': x1, 'x2': x2, 'e': sp.E, 'pi': sp.pi})
+            # Soporte para x/y como alias de x1/x2
+            expr = sp.sympify(f_text, locals={'x1': x1, 'x2': x2, 'x': x1, 'y': x2, 'e': sp.E, 'pi': sp.pi})
             f_lam = sp.lambdify((x1, x2), expr, 'numpy')
             X, Y = np.meshgrid(x, y)
             Z = np.vectorize(lambda a, b: float(f_lam(a, b)))(X, Y)

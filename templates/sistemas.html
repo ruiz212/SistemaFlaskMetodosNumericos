@@ -43,10 +43,6 @@
         </div>
     </div>
 
-    <div id="grafica-3d-seccion" class="glass-panel mt-4" style="display:none; height: 500px;">
-        <label class="section-label">Visualización 3D (n=2):</label>
-        <div id="plotly-3d" style="width:100%; height:100%;"></div>
-    </div>
 
     <div class="table-container glass-panel mt-4">
         <label class="section-label">Tabla de Iteraciones:</label>
@@ -67,6 +63,13 @@
         <button class="btn btn-success" id="btn-exportar-sis" disabled onclick="exportarExcel('tabla-sis', 'Sistemas')">
             Exportar a Excel
         </button>
+    </div>
+
+    <div id="grafica-3d-seccion" class="glass-panel mt-4" style="display:none; min-height: 500px;">
+        <label class="section-label">Visualización 3D Interactiva (n=2):</label>
+        <div id="plotly-3d" style="width:100%; height:500px; display: flex; align-items: center; justify-content: center;">
+            <div class="text-muted">Generando superficies 3D...</div>
+        </div>
     </div>
 </div>
 {% endblock %}
