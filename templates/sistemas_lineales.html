@@ -20,8 +20,9 @@
                     <option value="Matriz Inversa">Matriz Inversa</option>
                 </select>
             </div>
-            <div class="form-actions mt-4 flex-1">
+            <div class="form-actions mt-4 flex-1 flex-row gap-2">
                 <button class="btn btn-primary" id="btn-calc-lin" onclick="calcularLin()">Resolver</button>
+                <button class="btn btn-danger" id="btn-limpiar-lin" onclick="limpiarLin()">Limpiar</button>
             </div>
         </div>
 
@@ -137,6 +138,22 @@ async function calcularLin() {
 
     document.getElementById('pasos-lin').innerHTML = pasosHtml || "No hay pasos adicionales para este método.";
     playSound('success');
+}
+
+async function limpiarLin() {
+    if (window.animarLimpieza) {
+        window.animarLimpieza(() => {
+            generarMatriz();
+            document.getElementById('resultado-lin-container').style.display = 'none';
+            document.getElementById('solucion-lin').innerHTML = '';
+            document.getElementById('pasos-lin').innerHTML = '';
+        });
+    } else {
+        generarMatriz();
+        document.getElementById('resultado-lin-container').style.display = 'none';
+        document.getElementById('solucion-lin').innerHTML = '';
+        document.getElementById('pasos-lin').innerHTML = '';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', generarMatriz);

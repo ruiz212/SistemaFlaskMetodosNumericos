@@ -42,9 +42,6 @@ def sistemas():
 def sistemas_lineales():
     return render_template('sistemas_lineales.html')
 
-@app.route('/interpolacion')
-def interpolacion():
-    return render_template('interpolacion.html')
 
 # =========================================================================
 # API: ECUACIONES NO LINEALES
