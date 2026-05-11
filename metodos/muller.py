@@ -7,20 +7,15 @@ def fmt_c(val):
         return f"{val.real:.5f}{'+' if val.imag >=0 else '-'}{abs(val.imag):.5f}j"
     return f"{val:.5f}"
 
-def metodo_muller(x0, x1, x2, tol_porcentaje, a_coefs=None, f_eval_ext=None):
+def metodo_muller(x0, x1, x2, tol_porcentaje, a_coefs):
     resultados = []
     consola = []
     
-    if f_eval_ext is not None:
-        def f_eval(x_val):
-            val = f_eval_ext(x_val)
-            if val is None: raise ValueError("Error al evaluar la función.")
-            return complex(val)
-    elif a_coefs is not None:
-        def f_eval(x_val):
-            return complex(sum(c_val * (x_val ** i) for i, c_val in enumerate(a_coefs)))
-    else:
-        return {"error": "Se requieren coeficientes o una función evaluadora."}
+    if a_coefs is None:
+        return {"error": "Se requieren coeficientes."}
+        
+    def f_eval(x_val):
+        return complex(sum(c_val * (x_val ** i) for i, c_val in enumerate(a_coefs)))
         
     iteracion = 0
     max_iter = 100

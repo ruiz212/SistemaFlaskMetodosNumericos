@@ -5,6 +5,71 @@
    ========================================================================== */
 
 /* ── Override de variables de color para esta página ── */
+/* Math Preview - Floating HUD Style */
+.math-preview {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+    min-width: 250px;
+    max-width: 450px;
+    padding: 20px 30px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 
+                inset 0 0 20px rgba(99, 102, 241, 0.1);
+    color: var(--accent-blue);
+    font-size: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform: translateY(100px) scale(0.8);
+    opacity: 0;
+    pointer-events: none; /* No estorba clics */
+}
+
+.math-preview.active {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.math-preview::before {
+    content: "VISTA PREVIA MATEMÁTICA";
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.code-block {
+    background: #0f172a;
+    padding: 20px;
+    border-radius: 12px;
+    color: #e2e8f0;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--accent-blue);
+    color: var(--accent-blue);
+}
+
+.btn-outline:hover {
+    background: var(--accent-blue);
+    color: white;
+}
+
 :root {
     /* Void Prism palette */
     --vp-gold:    var(--accent-primary);

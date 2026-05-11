@@ -3,8 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Suite de Métodos Numéricos Pro: Soluciones precisas para ecuaciones no lineales, polinomios y sistemas.">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <title>Suite Numérica Pro</title>
-    <!-- Fuentes modernas -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}");
+        });
+      }
+    </script>
+    <!-- Optimización de Fuentes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
     <!-- Iconos Phosphor -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -14,6 +26,18 @@
     <!-- Driver.js para tutoriales interactivos -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    
+    <!-- KaTeX para previsualización real-time -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    
+    <!-- jsPDF y html2canvas para reportes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- Plotly para gráficas 3D -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+
     {% block styles %}{% endblock %}
     
     <style>
@@ -52,7 +76,13 @@
                     <i class="ph ph-function"></i> Polinomios
                 </a>
                 <a href="{{ url_for('sistemas') }}" class="nav-item page-link {% if request.path == '/sistemas' %}active{% endif %}">
-                    <i class="ph ph-intersect"></i> Sistemas
+                    <i class="ph ph-intersect"></i> Sistemas NL
+                </a>
+                <a href="{{ url_for('sistemas_lineales') }}" class="nav-item page-link {% if request.path == '/sistemas-lineales' %}active{% endif %}">
+                    <i class="ph ph-matrix"></i> Sistemas Lin
+                </a>
+                <a href="{{ url_for('interpolacion') }}" class="nav-item page-link {% if request.path == '/interpolacion' %}active{% endif %}">
+                    <i class="ph ph-graph"></i> Interpolación
                 </a>
                 
                 <div class="theme-toggle" id="theme-btn" style="cursor: pointer; margin-left: 16px; font-size: 20px; color: var(--text-primary); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; transition: background 0.3s;" title="Cambiar Tema">

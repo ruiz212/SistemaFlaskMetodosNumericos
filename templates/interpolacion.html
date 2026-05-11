@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container fade-in">
+    <h2 class="page-title">Interpolación Polinomial</h2>
+    
+    <div class="glass-panel form-panel">
+        <div class="form-row align-center">
+            <div class="input-group flex-1">
+                <label>Número de Puntos (n):</label>
+                <input type="number" id="n-inter" value="3" min="2" max="20" class="input-control text-center" onchange="generarCamposInterpolacion()">
+            </div>
+            <div class="input-group flex-2">
+                <label>Método:</label>
+                <select id="metodo-inter" class="input-control">
+                    <option value="Diferencias Divididas">Diferencias Divididas (Newton)</option>
+                </select>
+            </div>
+            <div class="form-actions mt-4 flex-1">
+                <button class="btn btn-primary" id="btn-calc-inter" onclick="calcularInter()">Calcular</button>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <label class="section-label">Puntos (x_i, y_i):</label>
+            <div class="dynamic-grid" id="container-inter">
+                <!-- Se llenan dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <div class="result-panel mt-4 flex-column" id="resultado-inter-container" style="display:none;">
+        <div id="resultado-inter" class="resultado-tarjeta success mb-3">
+            <!-- Polinomio resultante -->
+        </div>
+        <div class="glass-panel w-full">
+            <label class="section-label">Tabla de Diferencias Divididas:</label>
+            <div class="table-responsive">
+                <table id="tabla-inter" class="data-table">
+                    <thead id="thead-inter"></thead>
+                    <tbody id="tbody-inter"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function generarCamposInterpolacion() {
+    const n = parseInt(document.getElementById('n-inter').value);
+    const container = document.getElementById('container-inter');
+    container.innerHTML = Array.from({length: n}, (_, i) => `
+        <div class="point-input-card">
+            <div class="input-group">
+                <label>x_${i}</label>
+                <input type="text" id="inter-x-${i}" class="input-control text-center" placeholder="0">
+            </div>
+            <div class="input-group">
+                <label>y_${i}</label>
+                <input type="text" id="inter-y-${i}" class="input-control text-center" placeholder="0">
+            </div>
+        </div>
+    `).join('');
+}
+
+async function calcularInter() {
+    const n = parseInt(document.getElementById('n-inter').value);
+    const x = [], y = [];
+    for(let i=0; i<n; i++) {
+        x.push(document.getElementById(`inter-x-${i}`).value);
+        y.push(document.getElementById(`inter-y-${i}`).value);
+    }
+    
+    const payload = { x, y, metodo: document.getElementById('metodo-inter').value };
+    const data = await performRequest('/api/calcular_interpolacion', payload, 'btn-calc-inter');
+    
+    if (data.error) return showAlert('Error', data.error, 'error');
+    
+    document.getElementById('resultado-inter-container').style.display = 'flex';
+    document.getElementById('resultado-inter').innerHTML = `<strong>Polinomio:</strong> P(x) = ${data.coefs.map((c, i) => `${c.toFixed(4)}${i>0 ? `(x-x_0)...(x-x_${i-1})` : ''}`).join(' + ')}`;
+    playSound('success');
+}
+
+document.addEventListener('DOMContentLoaded', generarCamposInterpolacion);
+</script>
+
+<style>
+.point-input-card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 12px;
+    display: flex;
+    gap: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+</style>
+{% endblock %}

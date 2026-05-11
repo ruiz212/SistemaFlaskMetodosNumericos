@@ -30,7 +30,7 @@
                 <input type="number" id="iter-sis" placeholder="Ej: 50" class="input-control text-center">
             </div>
             <div class="form-actions mt-4 flex-2">
-                <button class="btn btn-primary" onclick="calcularSis()">Calcular</button>
+                <button class="btn btn-primary" id="btn-calc-sis" onclick="calcularSis()">Calcular</button>
                 <button class="btn btn-danger" onclick="limpiarSis()">Limpiar</button>
             </div>
         </div>
@@ -41,6 +41,11 @@
                 <!-- Se llenan dinámicamente -->
             </div>
         </div>
+    </div>
+
+    <div id="grafica-3d-seccion" class="glass-panel mt-4" style="display:none; height: 500px;">
+        <label class="section-label">Visualización 3D (n=2):</label>
+        <div id="plotly-3d" style="width:100%; height:100%;"></div>
     </div>
 
     <div class="table-container glass-panel mt-4">

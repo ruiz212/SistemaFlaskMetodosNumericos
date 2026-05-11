@@ -5,14 +5,15 @@
 {% endblock %}
 
 {% block content %}
-<div class="page-container fade-in">
+<div class="page-container fade-in" id="page-content-nl">
     <h2 class="page-title">Buscador de Raíces (Funciones)</h2>
     
     <div class="glass-panel form-panel">
         <div class="form-row">
             <div class="input-group flex-2">
                 <label>Ecuación f(x):</label>
-                <input type="text" id="ecuacion-nl" placeholder="Ej: x**3 - 3.5*x**2 + 2.75*x - 0.5" class="input-control">
+                <input type="text" id="ecuacion-nl" placeholder="Ej: x**3 - 3.5*x**2 + 2.75*x - 0.5" class="input-control" oninput="previewMath('ecuacion-nl', 'preview-nl')">
+                <div id="preview-nl" class="math-preview"></div>
             </div>
             <div class="input-group">
                 <label>Método:</label>
@@ -42,7 +43,7 @@
         </div>
 
         <div class="form-actions mt-4">
-            <button class="btn btn-primary" onclick="calcularNL()">Calcular</button>
+            <button class="btn btn-primary" id="btn-calc-nl" onclick="calcularNL()">Calcular</button>
             <button class="btn btn-danger" onclick="limpiarNL()">Limpiar</button>
         </div>
     </div>
@@ -67,8 +68,20 @@
             Esperando parámetros...
         </div>
         <button class="btn btn-success flex-1" id="btn-exportar-nl" disabled onclick="exportarExcel('tabla-nl', 'NoLineales')">
-            Exportar a Excel
+            <i class="ph ph-file-csv"></i> Excel
         </button>
+        <button class="btn btn-warning flex-1" id="btn-pdf-nl" disabled onclick="exportarPDF('page-content-nl', 'Reporte_Metodos_Numéricos')">
+            <i class="ph ph-file-pdf"></i> PDF
+        </button>
+    </div>
+
+    <!-- Pestaña de Código Generado -->
+    <div class="glass-panel mt-4" id="seccion-codigo" style="display: none;">
+        <div class="flex-row justify-between align-center mb-3">
+            <label class="section-label m-0">Código Generado (Python)</label>
+            <button class="btn btn-sm btn-outline" onclick="copyCode()"><i class="ph ph-copy"></i> Copiar</button>
+        </div>
+        <pre id="codigo-snippet" class="code-block"><code></code></pre>
     </div>
 
     <!-- ════════════════════════════════════════════════

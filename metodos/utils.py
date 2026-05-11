@@ -1,22 +1,31 @@
 import re
 import sympy as sp
+from functools import lru_cache
 
 # ─── Variable canónica ────────────────────────────────────────────────────────
 _x = sp.Symbol('x')
 
+@lru_cache(maxsize=64)
+def get_cached_compilation(ecuacion_texto, modo_angulo):
+    """Caché para evitar recompilar la misma ecuación múltiples veces."""
+    return compilar_funciones_base(ecuacion_texto, modo_angulo)
 
-def normalizar_ecuacion(ecuacion_texto: str) -> str:
-    """
-    Normaliza el texto de la ecuación antes de pasarlo a SymPy.
 
-    Reglas aplicadas:
-    1. Sustituye la variable 'X' (mayúscula) por 'x' (minúscula), cuidando
-       no tocar nombres de funciones como 'exp', 'Xe', etc.
-    2. Permite que el usuario escriba 'X + ln(X)' o 'x + ln(x)' indistintamente.
-    """
-    # Reemplaza 'X' que NO vaya precedida/seguida de letra (para no tocar
-    # nombres de funciones que empiecen con X — aunque SymPy no tiene ninguno).
+    # Reemplaza 'X' que NO vaya precedida/seguida de letra
     normalizado = re.sub(r'(?<![A-Za-z_])X(?![A-Za-z_0-9])', 'x', ecuacion_texto)
+    
+    # Multiplicación implícita: 2x -> 2*x, x( -> x*(, )x -> )*x
+    # Número seguido de letra/paréntesis
+    normalizado = re.sub(r'(\d)([a-zA-Z\(])', r'\1*\2', normalizado)
+    # Letra/paréntesis seguido de número (menos común pero posible)
+    normalizado = re.sub(r'([a-zA-Z\)])(\d)', r'\1*\2', normalizado)
+    # Cierre de paréntesis seguido de apertura o letra
+    normalizado = re.sub(r'(\))([a-zA-Z\(])', r'\1*\2', normalizado)
+    # Letra seguida de apertura de paréntesis (si no es una función conocida)
+    # Para simplificar, asumimos que si es sin, cos, etc, SymPy lo maneja, 
+    # pero x(x+1) -> x*(x+1)
+    normalizado = re.sub(r'(?<![a-zA-Z])x(\()', r'x*\1', normalizado)
+    
     return normalizado
 
 
@@ -24,12 +33,12 @@ def _locals_sympify():
     """Diccionario de locales extendido para sympify."""
     return {
         'e':   sp.E,
-        'E':   sp.E,       # por si el usuario escribe E mayúscula para Euler
+        'E':   sp.E,
         'ln':  sp.log,
         'log': sp.log,
         'pi':  sp.pi,
         'x':   _x,
-        'X':   _x,         # alias explícito — por si acaso
+        'X':   _x,
     }
 
 
@@ -37,11 +46,9 @@ def parse_ecuacion(ecuacion_texto, modo_angulo='rad'):
     texto = normalizar_ecuacion(ecuacion_texto)
     expr_simbolica = sp.sympify(texto, locals=_locals_sympify())
 
-    # Rechazar expresiones que no sean algebraicas (por ej. Relationals)
     if isinstance(expr_simbolica, sp.core.relational.Relational):
         raise ValueError(
-            "La expresión contiene un operador relacional (>=, <=, ==…). "
-            "Ingresa solo la función f(x), sin igualdades ni comparaciones."
+            "La expresión contiene un operador relacional. Ingresa solo f(x)."
         )
 
     if modo_angulo == 'deg':
@@ -53,22 +60,28 @@ def parse_ecuacion(ecuacion_texto, modo_angulo='rad'):
 
 
 def compilar_funciones(ecuacion_texto, modo_angulo='rad'):
+    """Wrapper con caché."""
+    return get_cached_compilation(ecuacion_texto, modo_angulo)
+
+
+def compilar_funciones_base(ecuacion_texto, modo_angulo='rad'):
+    """Lógica real de compilación."""
     try:
         x_sym = _x
         expr_simbolica = parse_ecuacion(ecuacion_texto, modo_angulo)
 
-        # Verificar que la expresión solo depende de 'x' (o de ninguna variable)
         vars_libres = expr_simbolica.free_symbols - {x_sym}
         if vars_libres:
             nombres = ', '.join(sorted(str(v) for v in vars_libres))
-            raise ValueError(
-                f"Variable(s) desconocida(s) en la ecuación: {nombres}. "
-                "Usa 'x' como única variable independiente."
-            )
+            raise ValueError(f"Variable(s) desconocida(s): {nombres}")
 
         derivada_simbolica = sp.diff(expr_simbolica, x_sym)
-        funcion_eval  = sp.lambdify(x_sym, expr_simbolica,  'math')
-        derivada_eval = sp.lambdify(x_sym, derivada_simbolica, 'math')
+        
+        # Intentamos usar backends rápidos
+        # math para floats, cmath para complejos si es posible
+        funcion_eval  = sp.lambdify(x_sym, expr_simbolica,  ['math', 'cmath'])
+        derivada_eval = sp.lambdify(x_sym, derivada_simbolica, ['math', 'cmath'])
+        
         return True, "Éxito", x_sym, expr_simbolica, derivada_simbolica, funcion_eval, derivada_eval
     except Exception as e:
         return False, str(e), None, None, None, None, None
@@ -76,29 +89,23 @@ def compilar_funciones(ecuacion_texto, modo_angulo='rad'):
 
 def evaluar_f(val, expr_simbolica, x_sym, funcion_eval):
     try:
-        if isinstance(val, complex):
-            return complex(expr_simbolica.evalf(subs={x_sym: val}))
-        result = funcion_eval(val)
-        if result is None:
-            raise ValueError("None")
-        return float(result)
-    except Exception:
+        # Intentamos la función lambdificada primero (es lo más rápido)
+        return funcion_eval(val)
+    except (ValueError, TypeError, ZeroDivisionError, OverflowError):
         try:
-            return complex(expr_simbolica.evalf(subs={x_sym: val}))
+            # Fallback a evalf si falla (más lento pero más robusto)
+            res = expr_simbolica.evalf(subs={x_sym: val})
+            return complex(res) if res.is_complex else float(res)
         except Exception:
             return None
 
 
 def evaluar_df(val, derivada_simbolica, x_sym, derivada_eval):
     try:
-        if isinstance(val, complex):
-            return complex(derivada_simbolica.evalf(subs={x_sym: val}))
-        result = derivada_eval(val)
-        if result is None:
-            raise ValueError("None")
-        return float(result)
-    except Exception:
+        return derivada_eval(val)
+    except (ValueError, TypeError, ZeroDivisionError, OverflowError):
         try:
-            return complex(derivada_simbolica.evalf(subs={x_sym: val}))
+            res = derivada_simbolica.evalf(subs={x_sym: val})
+            return complex(res) if res.is_complex else float(res)
         except Exception:
             return None

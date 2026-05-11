@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container fade-in">
+    <h2 class="page-title">Sistemas de Ecuaciones Lineales</h2>
+    
+    <div class="glass-panel form-panel">
+        <div class="form-row align-center">
+            <div class="input-group flex-1">
+                <label>Dimensión (n):</label>
+                <input type="number" id="n-lin" value="3" min="2" max="10" class="input-control text-center" onchange="generarMatriz()">
+            </div>
+            <div class="input-group flex-2">
+                <label>Método:</label>
+                <select id="metodo-lin" class="input-control">
+                    <option value="Eliminación Gaussiana">Eliminación Gaussiana</option>
+                    <option value="Factorización LU">Factorización LU</option>
+                </select>
+            </div>
+            <div class="form-actions mt-4 flex-1">
+                <button class="btn btn-primary" id="btn-calc-lin" onclick="calcularLin()">Resolver</button>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <label class="section-label">Matriz A y Vector b ([A|b]):</label>
+            <div id="matrix-container" class="matrix-grid">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <div id="resultado-lin-container" class="mt-4" style="display:none;">
+        <div class="glass-panel">
+            <label class="section-label">Solución:</label>
+            <div id="solucion-lin" class="solucion-chips"></div>
+        </div>
+        
+        <div class="glass-panel mt-4">
+            <label class="section-label">Pasos del Proceso:</label>
+            <div id="pasos-lin" class="steps-container"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function generarMatriz() {
+    const n = parseInt(document.getElementById('n-lin').value);
+    const container = document.getElementById('matrix-container');
+    container.style.gridTemplateColumns = `repeat(${n + 1}, 1fr)`;
+    
+    let html = '';
+    for(let i=0; i<n; i++) {
+        for(let j=0; j<n; j++) {
+            html += `<input type="text" id="a-${i}-${j}" class="input-control text-center" placeholder="a_${i+1},${j+1}">`;
+        }
+        html += `<input type="text" id="b-${i}" class="input-control text-center accent" placeholder="b_${i+1}">`;
+    }
+    container.innerHTML = html;
+}
+
+async function calcularLin() {
+    const n = parseInt(document.getElementById('n-lin').value);
+    const A = [], b = [];
+    for(let i=0; i<n; i++) {
+        const row = [];
+        for(let j=0; j<n; j++) {
+            row.push(parseFloat(document.getElementById(`a-${i}-${j}`).value || 0));
+        }
+        A.push(row);
+        b.push(parseFloat(document.getElementById(`b-${i}`).value || 0));
+    }
+    
+    const payload = { A, b, metodo: document.getElementById('metodo-lin').value };
+    const data = await performRequest('/api/calcular_sis_lin', payload, 'btn-calc-lin');
+    
+    if (data.error) return showAlert('Error', data.error, 'error');
+    
+    document.getElementById('resultado-lin-container').style.display = 'block';
+    const solDiv = document.getElementById('solucion-lin');
+    solDiv.innerHTML = data.resultado.solucion.map((val, i) => `
+        <div class="sol-chip">x_${i+1} = ${val.toFixed(6)}</div>
+    `).join('');
+    
+    if (data.resultado.pasos) {
+        document.getElementById('pasos-lin').innerHTML = data.resultado.pasos.map(p => `
+            <div class="step-card">
+                <div class="step-msg">${p.msg}</div>
+                <pre class="step-matrix">${p.matrix.map(r => r.map(v => v.toFixed(2).padStart(8)).join(' ')).join('\n')}</pre>
+            </div>
+        `).join('');
+    }
+    playSound('success');
+}
+
+document.addEventListener('DOMContentLoaded', generarMatriz);
+</script>
+
+<style>
+.matrix-grid {
+    display: grid;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.matrix-grid input.accent {
+    border-color: var(--accent-primary);
+    background: rgba(245, 158, 11, 0.1);
+}
+.solucion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.sol-chip {
+    background: var(--accent-blue);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+.step-card {
+    background: rgba(15, 23, 42, 0.5);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    border-left: 4px solid var(--accent-primary);
+}
+.step-msg {
+    margin-bottom: 10px;
+    color: var(--accent-primary);
+    font-weight: bold;
+}
+.step-matrix {
+    font-family: monospace;
+    font-size: 0.85rem;
+    overflow-x: auto;
+}
+</style>
+{% endblock %}

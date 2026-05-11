@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify
+import numpy as np
 from metodos.utils import compilar_funciones, evaluar_f, evaluar_df
 from metodos.biseccion import biseccion
 from metodos.regla_falsa import regla_falsa
@@ -10,6 +11,7 @@ from metodos.bairstow import metodo_bairstow
 from metodos.horner_newton import metodo_horner_newton
 from metodos.sistemas import resolver_sistema_no_lineal
 from metodos.grafica_nl import generar_datos_grafica
+from metodos.sistemas_lineales import eliminacion_gaussiana, factorizacion_lu
 
 app = Flask(__name__)
 
@@ -32,6 +34,14 @@ def polinomios():
 @app.route('/sistemas')
 def sistemas():
     return render_template('sistemas.html')
+
+@app.route('/sistemas-lineales')
+def sistemas_lineales():
+    return render_template('sistemas_lineales.html')
+
+@app.route('/interpolacion')
+def interpolacion():
+    return render_template('interpolacion.html')
 
 # =========================================================================
 # API: ECUACIONES NO LINEALES
@@ -131,20 +141,18 @@ def calcular_pol():
     
     try:
         if metodo == "Müller":
-            ecuacion = data.get('ecuacion', '').strip()
-            if not ecuacion:
-                return jsonify({'error': 'Ingresa una ecuación.'})
-                
-            exito, msg, x_sym, expr_simbolica, derivada_simbolica, funcion_eval, derivada_eval = compilar_funciones(ecuacion, 'rad')
-            if not exito:
-                return jsonify({'error': f"Error en la sintaxis de la ecuación: {msg}"})
-                
-            def f(v): return evaluar_f(v, expr_simbolica, x_sym, funcion_eval)
-            
+            if not a_input:
+                return jsonify({'error': 'Faltan coeficientes.'})
+            a_input = [float(x) for x in a_input]
+            # Coeficientes en python suelen ir de a0 a an para evaluar facil, 
+            # pero el usuario los ingresa de an a a0. main.js los manda en orden de an a a0.
+            # metodo_muller espera de a0 a an si usa enumerate(a_coefs).
+            a_input.reverse() 
+
             x0 = float(data.get('x0'))
             x1 = float(data.get('x1'))
             x2 = float(data.get('x2'))
-            res = metodo_muller(x0=x0, x1=x1, x2=x2, tol_porcentaje=tol_porcentaje, f_eval_ext=f)
+            res = metodo_muller(x0=x0, x1=x1, x2=x2, tol_porcentaje=tol_porcentaje, a_coefs=a_input)
         else:
             if not a_input:
                 return jsonify({'error': 'Faltan coeficientes.'})
@@ -210,6 +218,66 @@ def calcular_sis():
         return jsonify({'error': 'Valores iniciales inválidos.'})
     except Exception as e:
         return jsonify({'error': f"Error inesperado: {str(e)}"})
+
+@app.route('/api/calcular_sis_lin', methods=['POST'])
+def calcular_sis_lin():
+    data = request.json
+    metodo = data.get('metodo')
+    A = np.array(data.get('A'))
+    b = np.array(data.get('b'))
+    
+    if metodo == "Eliminación Gaussiana":
+        res = eliminacion_gaussiana(A, b)
+    elif metodo == "Factorización LU":
+        res = factorizacion_lu(A, b)
+    else:
+        return jsonify({'error': 'Método no soportado'})
+        
+    return jsonify({'success': True, 'resultado': res})
+
+@app.route('/api/grafica_sis_3d', methods=['POST'])
+def grafica_sis_3d():
+    data = request.json
+    funciones = data.get('funciones', [])
+    if len(funciones) != 2:
+        return jsonify({'error': 'Solo disponible para 2 variables'})
+    
+    # Rango de graficación
+    x = np.linspace(-5, 5, 40)
+    y = np.linspace(-5, 5, 40)
+    X, Y = np.meshgrid(x, y)
+    
+    res = []
+    for f_text in funciones:
+        exito, _, _, expr, _, f_eval, _ = compilar_funciones(f_text)
+        if not exito: return jsonify({'error': f'Error en {f_text}'})
+        
+        # Evaluar en malla
+        Z = np.zeros(X.shape)
+        for i in range(len(x)):
+            for j in range(len(y)):
+                # Newton Multivariable usa x1, x2...
+                # Pero compilar_funciones asume 'x'
+                # Necesitamos un helper para sistemas
+                Z[j, i] = float(expr.subs({'x1': x[i], 'x2': y[j]}).evalf())
+        res.append(Z.tolist())
+        
+    return jsonify({'success': True, 'X': x.tolist(), 'Y': y.tolist(), 'Z': res})
+
+@app.route('/api/calcular_interpolacion', methods=['POST'])
+def calcular_interpolacion():
+    data = request.json
+    x_puntos = np.array(data.get('x'), dtype=float)
+    y_puntos = np.array(data.get('y'), dtype=float)
+    metodo = data.get('metodo')
+    
+    from metodos.interpolacion import diferencias_divididas
+    
+    if metodo == "Diferencias Divididas":
+        coefs, _ = diferencias_divididas(x_puntos, y_puntos)
+        return jsonify({'success': True, 'coefs': coefs})
+    
+    return jsonify({'error': 'Método no soportado'})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
