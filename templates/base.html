@@ -29,7 +29,7 @@
     
     <!-- KaTeX para previsualización real-time -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     
     <!-- jsPDF y html2canvas para reportes -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -107,6 +107,9 @@
 
     <!-- Contenedor dinámico para la animación de "Limpiar" (Papelera) -->
     <div id="trash-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; overflow: hidden;"></div>
+
+    <!-- HUD de previsualización matemática (compartido, una sola instancia) -->
+    <div id="math-hud" class="math-preview" role="complementary" aria-label="Vista previa matemática"></div>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

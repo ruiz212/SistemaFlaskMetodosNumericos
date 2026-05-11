@@ -5,27 +5,23 @@ from functools import lru_cache
 # ─── Variable canónica ────────────────────────────────────────────────────────
 _x = sp.Symbol('x')
 
-@lru_cache(maxsize=64)
-def get_cached_compilation(ecuacion_texto, modo_angulo):
-    """Caché para evitar recompilar la misma ecuación múltiples veces."""
-    return compilar_funciones_base(ecuacion_texto, modo_angulo)
 
-
-    # Reemplaza 'X' que NO vaya precedida/seguida de letra
+def normalizar_ecuacion(ecuacion_texto: str) -> str:
+    """
+    Normaliza el texto de la ecuación antes de pasarlo a SymPy.
+    - Convierte X mayúscula a x minúscula.
+    - Añade el operador * en multiplicaciones implícitas (2x, x(x+1), etc.).
+    """
+    # 1. Reemplazar X mayúscula (que no forme parte de una palabra) por x
     normalizado = re.sub(r'(?<![A-Za-z_])X(?![A-Za-z_0-9])', 'x', ecuacion_texto)
-    
-    # Multiplicación implícita: 2x -> 2*x, x( -> x*(, )x -> )*x
-    # Número seguido de letra/paréntesis
+
+    # 2. Multiplicación implícita: 2x -> 2*x, 2( -> 2*(
     normalizado = re.sub(r'(\d)([a-zA-Z\(])', r'\1*\2', normalizado)
-    # Letra/paréntesis seguido de número (menos común pero posible)
-    normalizado = re.sub(r'([a-zA-Z\)])(\d)', r'\1*\2', normalizado)
-    # Cierre de paréntesis seguido de apertura o letra
+    # 3. Cierre de paréntesis seguido de apertura o letra: )x -> )*x, )( -> )*(
     normalizado = re.sub(r'(\))([a-zA-Z\(])', r'\1*\2', normalizado)
-    # Letra seguida de apertura de paréntesis (si no es una función conocida)
-    # Para simplificar, asumimos que si es sin, cos, etc, SymPy lo maneja, 
-    # pero x(x+1) -> x*(x+1)
+    # 4. x seguida de ( si no es una función conocida: x( -> x*(
     normalizado = re.sub(r'(?<![a-zA-Z])x(\()', r'x*\1', normalizado)
-    
+
     return normalizado
 
 
@@ -59,6 +55,12 @@ def parse_ecuacion(ecuacion_texto, modo_angulo='rad'):
     return expr_simbolica
 
 
+@lru_cache(maxsize=64)
+def get_cached_compilation(ecuacion_texto, modo_angulo):
+    """Caché para evitar recompilar la misma ecuación múltiples veces."""
+    return compilar_funciones_base(ecuacion_texto, modo_angulo)
+
+
 def compilar_funciones(ecuacion_texto, modo_angulo='rad'):
     """Wrapper con caché."""
     return get_cached_compilation(ecuacion_texto, modo_angulo)
@@ -76,12 +78,11 @@ def compilar_funciones_base(ecuacion_texto, modo_angulo='rad'):
             raise ValueError(f"Variable(s) desconocida(s): {nombres}")
 
         derivada_simbolica = sp.diff(expr_simbolica, x_sym)
-        
-        # Intentamos usar backends rápidos
-        # math para floats, cmath para complejos si es posible
-        funcion_eval  = sp.lambdify(x_sym, expr_simbolica,  ['math', 'cmath'])
-        derivada_eval = sp.lambdify(x_sym, derivada_simbolica, ['math', 'cmath'])
-        
+
+        # 'numpy' handles real and complex numbers robustly
+        funcion_eval  = sp.lambdify(x_sym, expr_simbolica,  'numpy')
+        derivada_eval = sp.lambdify(x_sym, derivada_simbolica, 'numpy')
+
         return True, "Éxito", x_sym, expr_simbolica, derivada_simbolica, funcion_eval, derivada_eval
     except Exception as e:
         return False, str(e), None, None, None, None, None
@@ -89,11 +90,9 @@ def compilar_funciones_base(ecuacion_texto, modo_angulo='rad'):
 
 def evaluar_f(val, expr_simbolica, x_sym, funcion_eval):
     try:
-        # Intentamos la función lambdificada primero (es lo más rápido)
         return funcion_eval(val)
     except (ValueError, TypeError, ZeroDivisionError, OverflowError):
         try:
-            # Fallback a evalf si falla (más lento pero más robusto)
             res = expr_simbolica.evalf(subs={x_sym: val})
             return complex(res) if res.is_complex else float(res)
         except Exception:

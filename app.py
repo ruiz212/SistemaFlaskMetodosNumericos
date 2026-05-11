@@ -241,27 +241,24 @@ def grafica_sis_3d():
     funciones = data.get('funciones', [])
     if len(funciones) != 2:
         return jsonify({'error': 'Solo disponible para 2 variables'})
-    
-    # Rango de graficación
-    x = np.linspace(-5, 5, 40)
-    y = np.linspace(-5, 5, 40)
-    X, Y = np.meshgrid(x, y)
-    
+
+    import sympy as sp
+    x1, x2 = sp.symbols('x1 x2')
+
+    x = np.linspace(-5, 5, 30)
+    y = np.linspace(-5, 5, 30)
+
     res = []
     for f_text in funciones:
-        exito, _, _, expr, _, f_eval, _ = compilar_funciones(f_text)
-        if not exito: return jsonify({'error': f'Error en {f_text}'})
-        
-        # Evaluar en malla
-        Z = np.zeros(X.shape)
-        for i in range(len(x)):
-            for j in range(len(y)):
-                # Newton Multivariable usa x1, x2...
-                # Pero compilar_funciones asume 'x'
-                # Necesitamos un helper para sistemas
-                Z[j, i] = float(expr.subs({'x1': x[i], 'x2': y[j]}).evalf())
-        res.append(Z.tolist())
-        
+        try:
+            expr = sp.sympify(f_text, locals={'x1': x1, 'x2': x2, 'e': sp.E, 'pi': sp.pi})
+            f_lam = sp.lambdify((x1, x2), expr, 'numpy')
+            X, Y = np.meshgrid(x, y)
+            Z = np.vectorize(lambda a, b: float(f_lam(a, b)))(X, Y)
+            res.append(Z.tolist())
+        except Exception as e:
+            return jsonify({'error': f'Error evaluando {f_text}: {str(e)}'})
+
     return jsonify({'success': True, 'X': x.tolist(), 'Y': y.tolist(), 'Z': res})
 
 @app.route('/api/calcular_interpolacion', methods=['POST'])

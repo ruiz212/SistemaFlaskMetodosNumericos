@@ -119,52 +119,59 @@ function exportarExcel(tablaId, nombreArchivo) {
 
 /**
  * Previsualización de Matemáticas en Tiempo Real
+ * Usa el HUD global (#math-hud) para no ocupar espacio en el formulario.
+ * Apoya fórmulas con fracciones, exponentes, trig y logaritmos.
  */
-function previewMath(inputId, previewId) {
-    const input = document.getElementById(inputId);
-    const preview = document.getElementById(previewId);
-    if (!input || !preview) return;
+let _mathPreviewTimer = null;
 
-    let text = input.value.trim();
+function previewMath(inputId) {
+    const input = document.getElementById(inputId);
+    const hud = document.getElementById('math-hud');
+    if (!input || !hud) return;
+
+    clearTimeout(_mathPreviewTimer);
+    const text = input.value.trim();
+
     if (!text) {
-        preview.innerHTML = '';
+        hud.classList.remove('active');
         return;
     }
 
-    // Solución Senior: Usar math.js para parsear y convertir a LaTeX real
-    // Esto maneja fracciones anidadas, potencias y todo automáticamente.
-    let latex = "";
-    try {
-        // Limpiar un poco el texto antes de math.js (ej. ** -> ^)
-        let cleanText = text.replace(/\*\*/g, '^');
-        
-        // Parsear con mathjs
-        const node = math.parse(cleanText);
-        latex = node.toTex({
-            parenthesis: 'keep', // Mantener coherencia con lo que escribe el usuario
-            implicit: 'show'     // Mostrar multiplicaciones implícitas
-        });
+    _mathPreviewTimer = setTimeout(() => {
+        if (typeof math === 'undefined' || typeof katex === 'undefined') return;
 
-        // Correcciones menores de formato KaTeX
-        latex = latex
-            .replace(/\\cdot/g, ' \\cdot ')
-            .replace(/\\ln/g, '\\ln')
-            .replace(/\\exp/g, 'e^{') // exp(x) -> e^{x}
-            // mathjs pone a veces paréntesis de más en exp, limpiamos si es necesario
-            .replace(/e\^\{([^}]+)\}/g, (m, p1) => `e^{${p1}}`);
+        try {
+            // Limpieza y estandarización para math.js
+            let cleanText = text
+                .replace(/\*\*/g, '^')
+                .replace(/ln\(/g, 'log(')
+                .replace(/log10\(/g, 'log10(');
 
-        // Estilo HUD activo
-        preview.classList.add('active');
-        
-        katex.render(latex, preview, {
-            throwOnError: false,
-            displayMode: true
-        });
-    } catch (e) {
-        // Si falla el parseo (mientras escribe), mostrar algo sutil o el regex anterior como fallback
-        preview.innerHTML = `<small style="color:rgba(255,255,255,0.4)">Escribiendo estructura...</small>`;
-        // No ocultamos el panel para evitar parpadeo
-    }
+            const node = math.parse(cleanText);
+            let latex = node.toTex({ parenthesis: 'keep' });
+
+            // Post-procesamiento para que KaTeX se vea mejor
+            latex = latex
+                .replace(/\\cdot/g, ' \\cdot ')
+                .replace(/\\exp/g, 'e^{') 
+                .replace(/e\^\{([^}]+)\}/g, (m, p1) => `e^{${p1}}`);
+
+            hud.classList.add('active');
+            katex.render(latex, hud, {
+                throwOnError: false,
+                displayMode: true
+            });
+        } catch (e) {
+            // Fallback para cuando la expresión está incompleta
+            hud.classList.add('active');
+            hud.innerHTML = `<small style="opacity:0.5; font-size:0.7rem; letter-spacing:1px;">CONSTRUYENDO ECUACIÓN...</small>`;
+        }
+    }, 150);
+}
+
+function hideMathPreview() {
+    const hud = document.getElementById('math-hud');
+    if (hud) hud.classList.remove('active');
 }
 
 /**
@@ -205,51 +212,6 @@ async function exportarPDF(elementId, filename) {
     }
 }
 
-/**
- * Generador de Snippets de Código
- */
-function generarCodigoSnippet(metodo, payload) {
-    let code = "";
-    if (['Bisección', 'Regla Falsa', 'Newton-Raphson', 'Secante'].includes(metodo)) {
-        code = `
-import math
-
-def f(x):
-    return ${payload.ecuacion.replace(/\*\*/g, '**')}
-
-def resolver():
-    # Implementación básica de ${metodo}
-    # Tolerancia: ${payload.tol}%
-    print("Calculando ${metodo} para f(x)...")
-    # ... lógica del método ...
-
-resolver()
-        `;
-    }
-    
-    const container = document.getElementById('seccion-codigo');
-    const snippet = document.getElementById('codigo-snippet');
-    if (container && snippet) {
-        container.style.display = 'block';
-        snippet.querySelector('code').textContent = code.trim();
-    }
-}
-
-function copyCode() {
-    const code = document.getElementById('codigo-snippet').textContent;
-    navigator.clipboard.writeText(code).then(() => {
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Código copiado',
-            showConfirmButton: false,
-            timer: 1500,
-            background: '#1e293b',
-            color: '#fff'
-        });
-    });
-}
 
 // ─── Ecuaciones No Lineales ──────────────────────────────────────────────────
 
@@ -339,7 +301,6 @@ async function calcularNL(force = false) {
     document.getElementById('btn-exportar-nl').disabled = false;
     if (document.getElementById('btn-pdf-nl')) document.getElementById('btn-pdf-nl').disabled = false;
 
-    generarCodigoSnippet(fields.metodo, payload);
     salvarHistorial(fields.metodo, payload);
     playSound('success');
 }
@@ -377,14 +338,7 @@ function limpiarNL() {
         ['ecuacion-nl', 'tol-nl'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
         document.getElementById('thead-nl').innerHTML = '';
         document.getElementById('tbody-nl').innerHTML = '';
-        const preview = document.getElementById('preview-nl');
-        if (preview) {
-            preview.innerHTML = '';
-            preview.classList.remove('active');
-        }
-        const codeSec = document.getElementById('seccion-codigo');
-        if (codeSec) codeSec.style.display = 'none';
-
+        hideMathPreview();
         const res = document.getElementById('resultado-nl');
         if (res) {
             res.textContent = 'Esperando parámetros...';
@@ -537,8 +491,7 @@ function generarCamposSistemas() {
         <div class="system-eq-card" style="opacity: 0;">
             <div class="eq-row">
                 <span class="eq-label">f_${i}:</span>
-                <input type="text" id="sis-f-${i}" placeholder="f_${i}(x...) = 0" class="input-control" oninput="previewMath('sis-f-${i}', 'preview-sis-${i}')">
-                <div id="preview-sis-${i}" class="math-preview" style="font-size: 0.85rem; min-height: 30px;"></div>
+                <input type="text" id="sis-f-${i}" placeholder="f_${i}(x...) = 0" class="input-control" oninput="previewMath('sis-f-${i}')">
             </div>
             <div class="eq-row">
                 <span class="eq-label alt">x_${i} init:</span>
