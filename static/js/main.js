@@ -512,111 +512,303 @@ function generarCamposSistemas() {
 }
 
 async function calcularSis() {
-    const n = parseInt(document.getElementById('n-sis')?.value || 2);
-    const payload = {
-        n,
-        tol: document.getElementById('tol-sis')?.value,
-        iter: document.getElementById('iter-sis')?.value,
-        angulo: document.getElementById('angulo-sis')?.value || 'rad',
-        funciones: [],
-        x0: []
-    };
-
-    for (let i = 1; i <= n; i++) {
-        payload.funciones.push(document.getElementById(`sis-f-${i}`).value);
-        payload.x0.push(document.getElementById(`sis-x-${i}`).value);
-    }
-
-    if (Object.values(payload).some(v => v === "" || (Array.isArray(v) && v.some(x => x === "")))) {
-        return showAlert('Atención', 'Complete todos los campos.', 'warning');
-    }
-
-    const data = await performRequest('/api/calcular_sis', payload, 'btn-calc-sis');
-    
-    if (data.consola) document.getElementById('consola-sis').value = data.consola;
-    if (data.error) return showAlert('Error', data.error, 'error');
-    
-    document.getElementById('thead-sis').innerHTML = `<tr>${data.headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
-    document.getElementById('tbody-sis').innerHTML = data.resultados.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('');
-    document.getElementById('btn-exportar-sis').disabled = false;
-
-    if (n === 2) {
-        graficarSis3D(payload.funciones);
-    }
-
-    if (window.animarTabla) window.animarTabla('#tabla-sis');
-    playSound('success');
-    salvarHistorial('Newton NR Multivariable', payload);
-}
-
-async function graficarSis3D(funciones) {
-    const section = document.getElementById('grafica-3d-seccion');
-    if (section) {
-        section.style.display = 'block';
-        section.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    const data = await performRequest('/api/grafica_sis_3d', { funciones });
-    if (data.error) {
-        if (section) section.style.display = 'none';
-        return;
-    }
-
-    const traces = data.Z.map((z, i) => ({
-        z: z,
-        x: data.X,
-        y: data.Y,
-        type: 'surface',
-        name: `f_${i+1}`,
-        opacity: 0.8,
-        colorscale: i === 0 ? 'Viridis' : 'Hot'
-    }));
-
-    // Plano z=0
-    traces.push({
-        z: data.X.map(() => data.Y.map(() => 0)),
-        x: data.X,
-        y: data.Y,
-        type: 'surface',
-        opacity: 0.3,
-        showscale: false,
-        colorscale: [[0, 'gray'], [1, 'gray']]
-    });
-
-    // Si tenemos resultados, marcamos la raíz encontrada
-    const tbody = document.getElementById('tbody-sis');
-    if (tbody && tbody.rows.length > 0) {
-        const lastRow = tbody.rows[tbody.rows.length - 1];
-        const x1 = parseFloat(lastRow.cells[1].textContent);
-        const x2 = parseFloat(lastRow.cells[2].textContent);
+    try {
+        const nInput = document.getElementById('n-sis');
+        if (!nInput) return;
+        const n = parseInt(nInput.value || 2);
         
-        traces.push({
-            x: [x1], y: [x2], z: [0],
-            mode: 'markers',
-            type: 'scatter3d',
-            name: 'Raíz Encontrada',
-            marker: {
-                size: 8,
-                color: '#10b981',
-                symbol: 'diamond',
-                line: { color: '#fff', width: 2 }
-            }
-        });
-    }
+        const payload = {
+            n,
+            tol: document.getElementById('tol-sis')?.value,
+            iter: document.getElementById('iter-sis')?.value,
+            angulo: document.getElementById('angulo-sis')?.value || 'rad',
+            funciones: [],
+            x0: []
+        };
 
-    Plotly.newPlot('plotly-3d', traces, {
-        title: 'Superficies del Sistema',
-        autosize: true,
-        margin: { l: 0, r: 0, b: 0, t: 40 },
-        scene: {
-            xaxis: {title: 'x1'},
-            yaxis: {title: 'x2'},
-            zaxis: {title: 'f(x)'}
-        },
-        paper_bgcolor: 'transparent',
-        font: { color: '#fff' }
-    });
+        for (let i = 1; i <= n; i++) {
+            const fEl = document.getElementById(`sis-f-${i}`);
+            const xEl = document.getElementById(`sis-x-${i}`);
+            if (fEl && xEl) {
+                payload.funciones.push(fEl.value);
+                payload.x0.push(xEl.value);
+            }
+        }
+
+        if (payload.funciones.length < n || !payload.tol || !payload.iter || payload.funciones.some(f => !f) || payload.x0.some(x => !x)) {
+            return showAlert('Atención', 'Complete todos los campos.', 'warning');
+        }
+
+        console.log("[DEBUG JS] Enviando petición a /api/calcular_sis:", payload);
+        const data = await performRequest('/api/calcular_sis', payload, 'btn-calc-sis');
+        console.log("[DEBUG JS] Respuesta recibida:", data);
+        
+        if (data.consola) document.getElementById('consola-sis').value = data.consola;
+        if (data.error) return showAlert('Error', data.error, 'error');
+        
+        document.getElementById('thead-sis').innerHTML = `<tr>${data.headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+        document.getElementById('tbody-sis').innerHTML = data.resultados.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('');
+        document.getElementById('btn-exportar-sis').disabled = false;
+
+        console.log("[DEBUG JS] data.raiz:", data.raiz, "| n:", n);
+
+        // Obtener la solución: primero de data.raiz, si no de la última fila de la tabla
+        let raiz = data.raiz;
+        if (!raiz && data.resultados && data.resultados.length > 0) {
+            const lastRow = data.resultados[data.resultados.length - 1];
+            // Las columnas son: [iter, x1, x2, ...xn, error]
+            raiz = lastRow.slice(1, n + 1).map(v => parseFloat(v));
+            console.log("[DEBUG JS] Raíz extraída de resultados:", raiz);
+        }
+
+        if (raiz && n >= 2) {
+            // Extraer trayectoria de iteraciones de la tabla de resultados
+            const trayectoria = (data.resultados || []).map(row => ({
+                x: parseFloat(row[1]),
+                y: parseFloat(row[2]),
+                z: n >= 3 ? parseFloat(row[3]) : 0
+            })).filter(p => !isNaN(p.x) && !isNaN(p.y));
+
+            // Actualizar labels del panel
+            const lbl  = document.getElementById('label-grafica-3d');
+            const desc = document.getElementById('desc-grafica-3d');
+            if (lbl)  lbl.textContent  = n === 2 ? 'Visualización 3D del Sistema (n=2):' :
+                                          n === 3 ? 'Visualización 3D del Sistema (n=3):' :
+                                                    `Visualización 3D del Sistema (n=${n}, proyección):`;
+            if (desc) desc.textContent = n === 2
+                ? 'Las superficies f₁(x,y) y f₂(x,y) se cruzan donde f=0. La línea punteada muestra la convergencia.'
+                : n === 3
+                ? 'Isosuperficies f=0 de las 3 ecuaciones. Su intersección (verde) es la solución del sistema.'
+                : 'Se muestran f₁ y f₂ fijando las variables adicionales en su valor solución.';
+
+            // Guardar contexto para re-ploteo (selector de variables, n>3)
+            window._sis3d_ctx = { funciones: payload.funciones, raiz, n, trayectoria, var_names: data.var_names || [] };
+            if (n > 3) mostrarSelectorVariables(data.var_names || [], raiz);
+
+            graficarSis3D(payload.funciones, raiz, n, trayectoria);
+        }
+
+        if (window.animarTabla) window.animarTabla('#tabla-sis');
+        playSound('success');
+        salvarHistorial('Newton NR Multivariable', payload);
+    } catch (err) {
+        console.error("[CRITICAL JS ERROR]", err);
+        showAlert('Error Crítico', 'Error en el navegador: ' + err.message, 'error');
+    }
 }
+
+async function graficarSis3D(funciones, x_sol = null, n = 2, trayectoria = []) {
+    const OLIVE_GREEN  = '#6B8E23';
+    const LIME_GREEN   = '#84cc16';
+    const START_COLOR  = '#f97316'; // orange for start point
+    const PATH_COLOR   = '#facc15'; // yellow for path
+
+    const section   = document.getElementById('grafica-3d-seccion');
+    const container = document.getElementById('plotly-3d');
+    if (!section || !container) return;
+
+    section.style.display = 'block';
+    container.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:520px;color:#94a3b8;gap:12px;">
+        <i class="ph-bold ph-spinner-gap spin" style="font-size:1.5rem;"></i>
+        <span>Calculando superficies ${n >= 3 ? 'volumétricas' : '3D'}…</span>
+    </div>`;
+
+    try {
+        // Determinar variables de ejes según selector (n>3) o automático
+        const selX = document.getElementById('sel-var-x');
+        const selY = document.getElementById('sel-var-y');
+        const selZ = document.getElementById('sel-var-z');
+
+        const payload = {
+            funciones, x_sol, n,
+            var_x: selX ? selX.value : null,
+            var_y: selY ? selY.value : null,
+            var_z: selZ ? selZ.value : null
+        };
+
+        // Variables fijadas para n>3
+        if (n > 3 && window._sis3d_ctx) {
+            const ctx = window._sis3d_ctx;
+            const usedVars = [payload.var_x, payload.var_y, payload.var_z].filter(Boolean);
+            const fixedVars = {};
+            ctx.var_names.forEach((vn, idx) => {
+                if (!usedVars.includes(vn) && idx < ctx.raiz.length) {
+                    fixedVars[vn] = ctx.raiz[idx];
+                }
+            });
+            payload.fixed_vars   = fixedVars;
+            payload.var_names    = ctx.var_names;
+        }
+
+        const response = await fetch('/api/grafica_sis_3d', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+
+        if (data.error) {
+            container.innerHTML = `<div style="color:#ef4444;padding:2rem;">⚠ ${data.error}</div>`;
+            return;
+        }
+
+        const sym = data.simbolos || ['x', 'y', 'z'];
+        const traces = [];
+
+        // ─── MODO 2D (n=2): Superficies f(x,y)=Z ─────────────────────────────
+        if (data.mode === '2d') {
+            const palettes = ['Viridis', 'Electric'];
+            data.Z.forEach((zMatrix, i) => {
+                traces.push({
+                    type: 'surface', name: `f<sub>${i+1}</sub>`,
+                    x: data.X, y: data.Y, z: zMatrix,
+                    opacity: 0.75, showscale: false,
+                    colorscale: palettes[i] || 'Cividis',
+                    contours: { z: { show: true, usecolormap: true, highlightcolor: '#fff', project: { z: false } } }
+                });
+            });
+
+            // Plano z=0 (intersección)
+            traces.push({
+                type: 'surface', name: 'f=0',
+                x: data.X, y: data.Y,
+                z: data.X.map(() => data.Y.map(() => 0)),
+                opacity: 0.15, showscale: false,
+                colorscale: [[0, 'rgba(255,255,255,0.05)'], [1, 'rgba(255,255,255,0.05)']]
+            });
+
+            // Raíz en z=0
+            if (x_sol) {
+                traces.push({
+                    type: 'scatter3d', name: 'Solución', mode: 'markers',
+                    x: [parseFloat(x_sol[0])], y: [parseFloat(x_sol[1])], z: [0],
+                    marker: { size: 14, color: OLIVE_GREEN, symbol: 'diamond',
+                              line: { color: LIME_GREEN, width: 3 } }
+                });
+            }
+
+            // Trayectoria de iteraciones en z=0
+            if (trayectoria.length > 1) {
+                traces.push({
+                    type: 'scatter3d', name: 'Convergencia', mode: 'lines+markers',
+                    x: trayectoria.map(p => p.x),
+                    y: trayectoria.map(p => p.y),
+                    z: trayectoria.map(() => 0),
+                    line:   { color: PATH_COLOR, width: 5, dash: 'dot' },
+                    marker: { size: 5, color: PATH_COLOR }
+                });
+                // Punto inicial
+                traces.push({
+                    type: 'scatter3d', name: 'x₀', mode: 'markers',
+                    x: [trayectoria[0].x], y: [trayectoria[0].y], z: [0],
+                    marker: { size: 10, color: START_COLOR, symbol: 'square',
+                              line: { color: 'white', width: 2 } }
+                });
+            }
+
+        // ─── MODO 3D (n>=3): Isosuperficies f(x,y,z)=0 ──────────────────────
+        } else if (data.mode === '3d') {
+            const isoColors = ['Viridis', 'Electric', 'Hot'];
+            const isoOpacity = [0.35, 0.30, 0.28];
+
+            data.values.forEach((vals, i) => {
+                traces.push({
+                    type: 'isosurface', name: `f<sub>${i+1}</sub>=0`,
+                    x: data.x_flat, y: data.y_flat, z: data.z_flat,
+                    value: vals,
+                    isomin: -0.5, isomax: 0.5,
+                    surface: { count: 1, fill: 1 },
+                    opacity: isoOpacity[i] || 0.3,
+                    colorscale: isoColors[i] || 'Cividis',
+                    showscale: false,
+                    caps: { x: { show: false }, y: { show: false }, z: { show: false } }
+                });
+            });
+
+            // Punto solución (3D)
+            if (x_sol && x_sol.length >= 3) {
+                traces.push({
+                    type: 'scatter3d', name: 'Solución', mode: 'markers',
+                    x: [parseFloat(x_sol[0])],
+                    y: [parseFloat(x_sol[1])],
+                    z: [parseFloat(x_sol[2])],
+                    marker: { size: 14, color: OLIVE_GREEN, symbol: 'diamond',
+                              line: { color: LIME_GREEN, width: 4 } }
+                });
+            }
+
+            // Trayectoria 3D real
+            if (trayectoria.length > 1) {
+                traces.push({
+                    type: 'scatter3d', name: 'Convergencia', mode: 'lines+markers',
+                    x: trayectoria.map(p => p.x),
+                    y: trayectoria.map(p => p.y),
+                    z: trayectoria.map(p => p.z),
+                    line:   { color: PATH_COLOR, width: 6, dash: 'dot' },
+                    marker: { size: 4, color: PATH_COLOR }
+                });
+                traces.push({
+                    type: 'scatter3d', name: 'x₀', mode: 'markers',
+                    x: [trayectoria[0].x], y: [trayectoria[0].y], z: [trayectoria[0].z],
+                    marker: { size: 11, color: START_COLOR, symbol: 'square',
+                              line: { color: 'white', width: 2 } }
+                });
+            }
+        }
+
+        // ─── Layout: Dark + Glassmorphism + Olive Accents ─────────────────────
+        const gridStyle = { gridcolor: '#334155', zerolinecolor: '#475569', color: '#94a3b8' };
+        const layout = {
+            autosize: true, height: 560,
+            margin: { l: 0, r: 0, b: 0, t: 0 },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor:  'rgba(0,0,0,0)',
+            font: { family: "'Inter', sans-serif", color: '#cbd5e1', size: 12 },
+            showlegend: true,
+            legend: {
+                bgcolor: 'rgba(15,23,42,0.75)', bordercolor: '#334155', borderwidth: 1,
+                font: { color: '#e2e8f0', size: 11 }, x: 0.01, y: 0.99
+            },
+            scene: {
+                bgcolor: 'rgba(2,6,23,0.6)',
+                xaxis: { title: { text: sym[0] || 'X', font: { color: LIME_GREEN } }, ...gridStyle },
+                yaxis: { title: { text: sym[1] || 'Y', font: { color: LIME_GREEN } }, ...gridStyle },
+                zaxis: { title: { text: sym[2] || (data.mode === '2d' ? 'f(x,y)' : 'Z'), font: { color: LIME_GREEN } }, ...gridStyle },
+                camera: { eye: { x: 1.6, y: 1.6, z: 1.2 } }
+            }
+        };
+
+        Plotly.newPlot(container, traces, layout, { responsive: true, displayModeBar: true });
+        setTimeout(() => Plotly.Plots.resize(container), 120);
+
+    } catch (err) {
+        console.error('[3D ERROR]', err);
+        container.innerHTML = `<div style="color:#ef4444;padding:2rem;">⚠ Error: ${err.message}</div>`;
+    }
+}
+
+/** Muestra panel selector de variables para n>3 */
+function mostrarSelectorVariables(var_names, raiz) {
+    let panel = document.getElementById('panel-var-selector');
+    if (!panel) return;
+    panel.style.display = 'block';
+    const opciones = var_names.map(v => `<option value="${v}">${v}</option>`).join('');
+    document.getElementById('sel-var-x').innerHTML = opciones;
+    document.getElementById('sel-var-y').innerHTML = opciones;
+    document.getElementById('sel-var-z').innerHTML = opciones;
+    // Selección por defecto: primeras 3
+    if (var_names.length > 0) document.getElementById('sel-var-x').value = var_names[0];
+    if (var_names.length > 1) document.getElementById('sel-var-y').value = var_names[1];
+    if (var_names.length > 2) document.getElementById('sel-var-z').value = var_names[2];
+}
+
+/** Re-graficar desde el panel selector (n>3) */
+function regraficar3D() {
+    const ctx = window._sis3d_ctx;
+    if (!ctx) return;
+    graficarSis3D(ctx.funciones, ctx.raiz, ctx.n, ctx.trayectoria);
+}
+
 
 function limpiarSis() {
     animarLimpieza(() => {

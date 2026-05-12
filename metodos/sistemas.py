@@ -3,7 +3,14 @@ import numpy as np
 from metodos.utils import parse_ecuacion
 
 def resolver_sistema_no_lineal(n, funciones_txt, valores_x, tol, max_iter, modo_angulo='rad'):
-    X0 = np.array([float(x) for x in valores_x])
+    """
+    Resuelve un sistema de n ecuaciones no lineales usando el método de Newton-Raphson.
+    Optimizado para usar lambdify con matrices de SymPy para mayor velocidad.
+    """
+    try:
+        X = np.array([float(x) for x in valores_x], dtype=float)
+    except (ValueError, TypeError):
+        return {"error": "Los valores iniciales deben ser numéricos."}
     
     F_sym = []
     for i, eq_text in enumerate(funciones_txt):
@@ -19,83 +26,107 @@ def resolver_sistema_no_lineal(n, funciones_txt, valores_x, tol, max_iter, modo_
         if hasattr(expr, 'free_symbols'):
             simbolos_usados.update(expr.free_symbols)
             
+    # Ordenar símbolos alfabéticamente (x, y, z...) para consistencia con el vector de entrada
     simbolos = sorted(list(simbolos_usados), key=lambda s: s.name)
+    
+    # Validar que no haya más símbolos que ecuaciones
     if len(simbolos) > n:
-        return {"error": f"Se detectaron {len(simbolos)} variables ({', '.join([s.name for s in simbolos])}) pero solo hay {n} ecuaciones."}
+        nombres = ', '.join([s.name for s in simbolos])
+        return {"error": f"Se detectaron {len(simbolos)} variables ({nombres}) pero solo hay {n} ecuaciones."}
         
+    # Si hay menos símbolos, rellenar con nombres genéricos para completar n
     while len(simbolos) < n:
         simbolos.append(sp.Symbol(f"var_extra_{len(simbolos)}"))
         
     consola = []
-    consola.append("=== GENERANDO JACOBIANO ===")
-    consola.append(f"Variables ordenadas: {', '.join([s.name for s in simbolos])}\n")
+    consola.append("=== SISTEMA NO LINEAL (NEWTON-RAPHSON) ===")
+    consola.append(f"Variables detectadas: {', '.join([s.name for s in simbolos])}")
+    consola.append(f"Tolerancia: {tol}, Max Iter: {max_iter}\n")
     
-    J_sym = []
-    for f in F_sym:
-        fila_J = [sp.diff(f, sim) for sim in simbolos]
-        J_sym.append(fila_J)
-
-    F_func = [sp.lambdify(simbolos, f, 'numpy') for f in F_sym]
-    J_func = [[sp.lambdify(simbolos, j, 'numpy') for j in fila] for fila in J_sym]
-
-    headers = ["Iteración"] + [f"{s.name}" for s in simbolos] + ["Error"]
+    # --- PREPARACIÓN MATRICIAL (OPTIMIZADO PARA VELOCIDAD) ---
+    print(f"[DEBUG] Iniciando preparación de funciones para n={n}")
     
-    iteracion = 0
-    error = float('inf')
-    X = X0.copy()
+    # Calcular Jacobiana simbólica
+    print("[DEBUG] Calculando Jacobiana simbólica...")
+    F_mat = sp.Matrix(F_sym)
+    J_mat = F_mat.jacobian(simbolos)
+    
+    # Lambdificar individualmente (mucho más rápido que lambdificar la matriz completa)
+    # Usamos 'math' para máxima velocidad en cálculos escalares
+    print("[DEBUG] Compilando funciones f_i...")
+    f_funcs = [sp.lambdify(simbolos, f, modules=['math', 'numpy']) for f in F_sym]
+    
+    print("[DEBUG] Compilando Jacobiana J_ij...")
+    j_funcs = []
+    for r in range(n):
+        fila_funcs = []
+        for c in range(n):
+            fila_funcs.append(sp.lambdify(simbolos, J_mat[r, c], modules=['math', 'numpy']))
+        j_funcs.append(fila_funcs)
+    
+    print("[DEBUG] Compilación terminada.")
 
-    def evaluar_F(X_val):
-        return np.array([float(f(*X_val)) if not isinstance(f(*X_val), np.ndarray) else float(f(*X_val)[0]) for f in F_func])
-        
-    def evaluar_J(X_val):
-        mat = np.zeros((n, n))
-        for r in range(n):
-            for c in range(n):
-                val = J_func[r][c](*X_val)
-                mat[r, c] = float(val) if np.isscalar(val) else float(np.array(val).flatten()[0])
-        return mat
-
+    headers = ["Iteración"] + [f"{s.name}" for s in simbolos] + ["Error Máx"]
     resultados = []
     
-    while error > tol and iteracion <= max_iter:
+    error = float('inf')
+    iteracion = 0
+
+    print("[DEBUG] Iniciando bucle de iteraciones...")
+    while error > tol and iteracion < max_iter:
+        print(f"[DEBUG] Iteración {iteracion} - Punto: {X}")
         try:
-            F_val = evaluar_F(X)
-            J_val = evaluar_J(X)
+            # Evaluar vector F y matriz J elemento a elemento
+            # Esto evita el overhead de Matrix/Array de SymPy en el bucle
+            F_eval = np.array([f(*X) for f in f_funcs], dtype=float)
+            
+            J_eval = np.zeros((n, n))
+            for r in range(n):
+                for c in range(n):
+                    J_eval[r, c] = j_funcs[r][c](*X)
+            
         except Exception as e:
-            consola.append(f"Error evaluando funciones en iteración {iteracion}: {e}")
-            return {"error": f"Error de evaluación: {str(e)}", "consola": consola}
+            print(f"[DEBUG] Error en evaluación: {e}")
+            consola.append(f"Error de evaluación en iteración {iteracion}: {e}")
+            return {"error": f"Error matemático: {str(e)}", "consola": consola}
 
-        consola.append(f"\\n--- Iteración {iteracion} ---")
-        consola.append("Jacobiana:")
-        for row in J_val:
-            consola.append("  [ " + "  ".join([f"{val:9.4f}" for val in row]) + " ]")
+        # Registrar estado actual antes del paso
+        error_display = f"{error:.8f}" if iteracion > 0 else "---"
+        fila_data = [str(iteracion)] + [f"{val:.8f}" for val in X] + [error_display]
+        resultados.append(fila_data)
 
+        # Paso de Newton: X_nuevo = X - J^-1 * F
         try:
-            J_inv = np.linalg.inv(J_val)
+            # Resolver el sistema lineal J * delta = F es más estable que invertir J
+            delta_X = np.linalg.solve(J_eval, F_eval)
         except np.linalg.LinAlgError:
-            consola.append(f"Matriz singular en iteración {iteracion}.")
-            return {"error": "El sistema es singular con los valores actuales. La matriz Jacobiana no se puede invertir.", "consola": consola}
+            consola.append(f"Matriz Jacobiana singular en iteración {iteracion}. No se puede invertir.")
+            return {"error": "El sistema es singular (determinante cero). Prueba con otros valores iniciales.", "consola": consola}
 
-        delta_X = J_inv @ F_val
         X_nuevo = X - delta_X
         
-        error = np.max(np.abs(X_nuevo - X))
-        
-        fila_data = [str(iteracion)] + [f"{x:.6f}" for x in X] + [f"{error:.6f}" if iteracion > 0 else "-"]
-        resultados.append(fila_data)
+        # Calcular error como la norma infinita de la diferencia
+        error = np.max(np.abs(delta_X))
         
         X = X_nuevo
         iteracion += 1
 
+    # Agregar última fila de resultados
+    error_final = f"{error:.8f}"
+    fila_final = [str(iteracion)] + [f"{val:.8f}" for val in X] + [error_final]
+    resultados.append(fila_final)
+
     if error <= tol:
-        fila_data = [str(iteracion)] + [f"{x:.6f}" for x in X] + [f"{error:.6f}"]
-        resultados.append(fila_data)
-        
-        consola.append(f"Convergió en {iteracion} iteraciones.")
-        consola.append("=== SOLUCIÓN ===")
-        for i, x in enumerate(X):
-            consola.append(f"x_{i+1} = {x:.6f}")
+        consola.append(f"\nConvergió exitosamente en {iteracion} iteraciones.")
+        consola.append(f"Error final: {error:.8f}")
     else:
-        consola.append(f"No convergió en el máximo de iteraciones ({max_iter}).")
-        
-    return {"resultados": resultados, "headers": headers, "consola": consola}
+        consola.append(f"\nNo se alcanzó la tolerancia en {max_iter} iteraciones.")
+        consola.append("El sistema podría estar divergiendo o requiere más iteraciones.")
+
+    return {
+        "resultados": resultados, 
+        "headers": headers, 
+        "consola": consola, 
+        "raiz": X.tolist(),
+        "var_names": [s.name for s in simbolos]
+    }

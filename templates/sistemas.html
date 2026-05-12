@@ -65,11 +65,30 @@
         </button>
     </div>
 
-    <div id="grafica-3d-seccion" class="glass-panel mt-4" style="display:none; min-height: 500px;">
-        <label class="section-label">Visualización 3D Interactiva (n=2):</label>
-        <div id="plotly-3d" style="width:100%; height:500px; display: flex; align-items: center; justify-content: center;">
-            <div class="text-muted">Generando superficies 3D...</div>
+    <div id="grafica-3d-seccion" class="glass-panel mt-4" style="display:none;">
+        <label class="section-label" id="label-grafica-3d">Visualización 3D Interactiva:</label>
+        <p id="desc-grafica-3d" style="color:var(--text-secondary); font-size:0.85rem; margin:4px 0 12px;"></p>
+        
+        <!-- Selector para n > 3 -->
+        <div id="panel-var-selector" class="glass-panel mb-3" style="display:none; padding:10px; border:1px solid var(--accent-blue);">
+            <div style="font-size:0.75rem; color:var(--accent-blue); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Variables de Visualización (n > 3):</div>
+            <div class="flex-row gap-2" style="flex-wrap:wrap;">
+                <div class="input-group" style="margin:0;">
+                    <label style="font-size:0.7rem;">Eje X:</label>
+                    <select id="sel-var-x" class="input-control" onchange="regraficar3D()" style="padding:2px 5px; height:auto;"></select>
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label style="font-size:0.7rem;">Eje Y:</label>
+                    <select id="sel-var-y" class="input-control" onchange="regraficar3D()" style="padding:2px 5px; height:auto;"></select>
+                </div>
+                <div class="input-group" style="margin:0;">
+                    <label style="font-size:0.7rem;">Eje Z:</label>
+                    <select id="sel-var-z" class="input-control" onchange="regraficar3D()" style="padding:2px 5px; height:auto;"></select>
+                </div>
+            </div>
         </div>
+
+        <div id="plotly-3d" style="width:100%; height:520px;"></div>
     </div>
 </div>
 {% endblock %}

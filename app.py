@@ -191,6 +191,7 @@ def calcular_pol():
 
 @app.route('/api/calcular_sis', methods=['POST'])
 def calcular_sis():
+    print("[DEBUG] Petición recibida en /api/calcular_sis")
     data = request.json
     n = int(data.get('n', 2))
     funciones_txt = data.get('funciones', [])
@@ -213,7 +214,15 @@ def calcular_sis():
         if "error" in res:
             return jsonify({'error': res["error"], 'consola': "\n".join(res.get("consola", []))})
             
-        return jsonify({'success': True, 'resultados': res["resultados"], 'headers': res["headers"], 'consola': "\n".join(res["consola"])})
+        return jsonify({
+            'success': True,
+            'resultados': res["resultados"],
+            'headers':    res["headers"],
+            'consola':    "\n".join(res["consola"]),
+            'raiz':       res.get("raiz", []),
+            'var_names':  res.get("var_names", [])
+        })
+
     except ValueError:
         return jsonify({'error': 'Valores iniciales inválidos.'})
     except Exception as e:
@@ -243,36 +252,168 @@ def calcular_sis_lin():
 
 @app.route('/api/grafica_sis_3d', methods=['POST'])
 def grafica_sis_3d():
-    data = request.json
-    funciones = data.get('funciones', [])
-    if len(funciones) != 2:
-        return jsonify({'error': 'Solo disponible para 2 variables'})
+    """
+    Genera datos de visualización 3D para sistemas no lineales.
+    - n=2 → mode='2d': superficies f(x,y)
+    - n>=3 → mode='3d': isosuperficies f(x,y,z)=0 (volumétrico)
+    Evaluación 100% NumPy vectorizado — sin SymPy, sin latencia.
+    """
+    import math, re
 
-    import sympy as sp
-    x1, x2 = sp.symbols('x1 x2')
+    data       = request.json
+    funciones_txt = data.get('funciones', [])
+    x_sol      = data.get('x_sol', [])
+    n          = int(data.get('n', 2))
+    var_x_req  = data.get('var_x')   # nombre eje X (n>3)
+    var_y_req  = data.get('var_y')   # nombre eje Y (n>3)
+    var_z_req  = data.get('var_z')   # nombre eje Z (n>3)
+    fixed_vars = data.get('fixed_vars', {})   # {nombre: valor} para n>3
+    var_names_hint = data.get('var_names', [])
 
-    x = np.linspace(-5, 5, 30)
-    y = np.linspace(-5, 5, 30)
+    if len(funciones_txt) < 2:
+        return jsonify({'error': 'Se requieren al menos 2 ecuaciones.'})
 
-    res = []
-    for f_text in funciones:
+    # ── Normalizar expresiones ──────────────────────────────────────────────
+    def normalizar(expr):
+        expr = expr.replace('^', '**')
+        expr = re.sub(r'\bsen\b', 'sin', expr)
+        expr = re.sub(r'\btg\b',  'tan', expr)
+        expr = re.sub(r'\bln\b',  'log', expr)
+        expr = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', expr)
+        return expr
+
+    # ── Detectar variables ──────────────────────────────────────────────────
+    FUNCIONES_CONOCIDAS = {'sin','cos','tan','sen','tg','ln','log','exp','sqrt',
+                           'abs','pi','e','asin','acos','atan','sinh','cosh','tanh',
+                           'floor','ceil','round'}
+    todas_vars = set()
+    for txt in funciones_txt:
+        for tok in re.findall(r'\b([a-zA-Z_][a-zA-Z0-9_]*)\b', txt):
+            if tok not in FUNCIONES_CONOCIDAS and len(tok) <= 4:
+                todas_vars.add(tok)
+    vars_ordenadas = sorted(todas_vars)
+
+    # Determinar ejes
+    vx = var_x_req or (vars_ordenadas[0] if len(vars_ordenadas) > 0 else 'x')
+    vy = var_y_req or (vars_ordenadas[1] if len(vars_ordenadas) > 1 else 'y')
+    vz = var_z_req or (vars_ordenadas[2] if len(vars_ordenadas) > 2 else 'z')
+
+    # ── Contexto NumPy base ─────────────────────────────────────────────────
+    NP_CTX = {
+        'sin': np.sin, 'cos': np.cos, 'tan': np.tan,
+        'exp': np.exp, 'log': np.log, 'sqrt': np.sqrt,
+        'abs': np.abs, 'pi': np.pi,   'e':   np.e,
+        'asin': np.arcsin, 'acos': np.arccos, 'atan': np.arctan,
+        'sinh': np.sinh,   'cosh': np.cosh,   'tanh': np.tanh,
+        'floor': np.floor, 'ceil': np.ceil
+    }
+    # Añadir variables fijadas (n>3)
+    for k, v in fixed_vars.items():
         try:
-            # Soporte para x/y como alias de x1/x2
-            expr = sp.sympify(f_text, locals={
-                'x1': x1, 'x2': x2, 'x': x1, 'y': x2, 
-                'e': sp.E, 'pi': sp.pi,
-                'sen': sp.sin, 'tg': sp.tan, 'ln': sp.log
-            })
-            f_lam = sp.lambdify((x1, x2), expr, 'numpy')
-            X, Y = np.meshgrid(x, y)
-            Z = np.vectorize(lambda a, b: float(f_lam(a, b)))(X, Y)
-            res.append(Z.tolist())
-        except Exception as e:
-            return jsonify({'error': f'Error evaluando {f_text}: {str(e)}'})
+            NP_CTX[k] = float(v)
+        except Exception:
+            pass
 
-    return jsonify({'success': True, 'X': x.tolist(), 'Y': y.tolist(), 'Z': res})
+    # ── Rango centrado en solución ──────────────────────────────────────────
+    sol_map = {}
+    if x_sol and vars_ordenadas:
+        for i, vn in enumerate(vars_ordenadas):
+            if i < len(x_sol):
+                sol_map[vn] = float(x_sol[i])
+
+    def centro(vname, default=0.0):
+        return sol_map.get(vname, default)
+
+    delta = 5.0
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # MODO 2D — n=2: superficies f(x,y) sobre malla 2D
+    # ══════════════════════════════════════════════════════════════════════════
+    if n <= 2:
+        GRID = 45
+        cx = centro(vx); cy = centro(vy)
+        x_lin = np.linspace(cx - delta, cx + delta, GRID)
+        y_lin = np.linspace(cy - delta, cy + delta, GRID)
+        Xm, Ym = np.meshgrid(x_lin, y_lin)
+
+        res_z = []
+        for txt in funciones_txt[:2]:
+            expr_clean = normalizar(txt)
+            ctx = dict(NP_CTX)
+            ctx[vx] = Xm; ctx[vy] = Ym
+            try:
+                Z = eval(expr_clean, {"__builtins__": {}}, ctx)  # noqa: S307
+                if np.isscalar(Z):
+                    Z = np.full(Xm.shape, float(Z))
+                else:
+                    Z = np.asarray(Z, dtype=complex)
+                    if np.iscomplexobj(Z):
+                        Z = Z.real
+                    Z = Z.astype(float)
+                Z = np.nan_to_num(Z, nan=0.0, posinf=1e3, neginf=-1e3)
+            except Exception as ex:
+                print(f"[3D-2D ERROR] {ex}")
+                Z = np.zeros_like(Xm)
+            res_z.append(Z.tolist())
+
+        return jsonify({
+            'success': True, 'mode': '2d',
+            'X': x_lin.tolist(), 'Y': y_lin.tolist(), 'Z': res_z,
+            'simbolos': [vx, vy], 'var_names': vars_ordenadas
+        })
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # MODO 3D — n>=3: isosuperficies f(x,y,z)=0 sobre malla 3D
+    # ══════════════════════════════════════════════════════════════════════════
+    GRID3 = 22  # 22^3 = 10648 pts — rápido y suficientemente denso
+    cx = centro(vx); cy = centro(vy); cz = centro(vz)
+
+    x_lin = np.linspace(cx - delta, cx + delta, GRID3)
+    y_lin = np.linspace(cy - delta, cy + delta, GRID3)
+    z_lin = np.linspace(cz - delta, cz + delta, GRID3)
+
+    # Malla 3D indexada con 'ij' para consistencia con Plotly
+    Xg, Yg, Zg = np.meshgrid(x_lin, y_lin, z_lin, indexing='ij')
+
+    x_flat = Xg.flatten().tolist()
+    y_flat = Yg.flatten().tolist()
+    z_flat = Zg.flatten().tolist()
+
+    values_list = []
+    # Para n=3 graficamos las 3 funciones; para n>3 solo f1 y f2
+    n_funcs = min(n, 3)
+    for txt in funciones_txt[:n_funcs]:
+        expr_clean = normalizar(txt)
+        ctx = dict(NP_CTX)
+        ctx[vx] = Xg; ctx[vy] = Yg; ctx[vz] = Zg
+        try:
+            V = eval(expr_clean, {"__builtins__": {}}, ctx)  # noqa: S307
+            if np.isscalar(V):
+                V = np.full(Xg.shape, float(V))
+            else:
+                V = np.asarray(V, dtype=complex)
+                if np.iscomplexobj(V):
+                    V = V.real
+                V = V.astype(float)
+            V = np.nan_to_num(V, nan=0.0, posinf=1e6, neginf=-1e6)
+        except Exception as ex:
+            print(f"[3D-ISO ERROR] {ex}")
+            V = np.zeros_like(Xg)
+        values_list.append(V.flatten().tolist())
+
+    return jsonify({
+        'success': True, 'mode': '3d',
+        'x_flat': x_flat, 'y_flat': y_flat, 'z_flat': z_flat,
+        'x_lin': x_lin.tolist(), 'y_lin': y_lin.tolist(), 'z_lin': z_lin.tolist(),
+        'values': values_list,
+        'simbolos': [vx, vy, vz],
+        'var_names': vars_ordenadas
+    })
+
+
 
 @app.route('/api/calcular_interpolacion', methods=['POST'])
+
 def calcular_interpolacion():
     data = request.json
     x_puntos = np.array(data.get('x'), dtype=float)
