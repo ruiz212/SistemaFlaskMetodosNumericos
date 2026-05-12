@@ -258,7 +258,11 @@ def grafica_sis_3d():
     for f_text in funciones:
         try:
             # Soporte para x/y como alias de x1/x2
-            expr = sp.sympify(f_text, locals={'x1': x1, 'x2': x2, 'x': x1, 'y': x2, 'e': sp.E, 'pi': sp.pi})
+            expr = sp.sympify(f_text, locals={
+                'x1': x1, 'x2': x2, 'x': x1, 'y': x2, 
+                'e': sp.E, 'pi': sp.pi,
+                'sen': sp.sin, 'tg': sp.tan, 'ln': sp.log
+            })
             f_lam = sp.lambdify((x1, x2), expr, 'numpy')
             X, Y = np.meshgrid(x, y)
             Z = np.vectorize(lambda a, b: float(f_lam(a, b)))(X, Y)

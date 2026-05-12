@@ -11,6 +11,8 @@ def punto_fijo(x0, tol, f, force=False, g_prima=None):
         x_nuevo = f(x_actual)
         if x_nuevo is None:
             return {"error": "Error: desbordamiento numérico evaluando g(x)."}
+            
+        x_nuevo = x_nuevo.real if isinstance(x_nuevo, complex) else x_nuevo
 
         # Error relativo porcentual — calculable desde la primera iteración
         if x_nuevo != 0:

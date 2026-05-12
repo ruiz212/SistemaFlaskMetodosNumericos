@@ -32,6 +32,8 @@ def _locals_sympify():
         'E':   sp.E,
         'ln':  sp.log,
         'log': sp.log,
+        'sen': sp.sin,  # Soporte para 'sen' (español)
+        'tg':  sp.tan,  # Soporte para 'tg' (español)
         'pi':  sp.pi,
         'x':   _x,
         'X':   _x,

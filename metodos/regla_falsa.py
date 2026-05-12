@@ -12,6 +12,11 @@ def regla_falsa(a, b, tol, f):
 
     while True:
         fa, fb = f(a), f(b)
+        
+        # Manejo de números complejos (tomar parte real)
+        fa = fa.real if isinstance(fa, complex) else fa
+        fb = fb.real if isinstance(fb, complex) else fb
+
         c_actual = (a * fb - b * fa) / (fb - fa)   # Interpolación lineal
             
         fc = f(c_actual)
