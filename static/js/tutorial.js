@@ -29,6 +29,7 @@ function iniciarTutorial() {
         path === '/' || path === ''         ? stepsIndex()      :
         path.includes('no-lineales')        ? stepsNoLineales() :
         path.includes('polinomios')         ? stepsPolinomios() :
+        path.includes('sistemas-lineales')  ? stepsSistemasLineales() :
         path.includes('sistemas')           ? stepsSistemas()   :
         stepsGenerico();
 
@@ -384,6 +385,73 @@ function stepsSistemas() {
                 description:
                     'Muestra el proceso completo: la Jacobiana evaluada en cada iteración ' +
                     'y la solución final con los valores de cada variable.',
+                side: 'top'
+            }
+        },
+    ];
+}
+
+// ─── SISTEMAS LINEALES ────────────────────────────────────────────────────────
+function stepsSistemasLineales() {
+    return [
+        {
+            popover: {
+                title: 'Sistemas Lineales',
+                description:
+                    'Resuelve sistemas de ecuaciones de la forma <b>Ax = b</b>. ' +
+                    'Puedes usar métodos directos de descomposición o eliminación.',
+            }
+        },
+        {
+            element: '#n-lin',
+            popover: {
+                title: 'Dimensión (n)',
+                description:
+                    'Indica el número de incógnitas y ecuaciones. ' +
+                    'La matriz se redimensionará automáticamente al cambiar este valor.',
+                side: 'bottom'
+            }
+        },
+        {
+            element: '#metodo-lin',
+            popover: {
+                title: 'Método de solución',
+                description:
+                    '<b>Eliminación Gaussiana</b>: Transforma A en una matriz triangular superior.<br><br>' +
+                    '<b>Factorización LU</b>: Descompone A en matrices L (Lower) y U (Upper).<br><br>' +
+                    '<b>Regla de Cramer</b>: Usa determinantes (solo para sistemas pequeños).<br><br>' +
+                    '<b>Matriz Inversa</b>: Calcula x = A⁻¹b.',
+                side: 'bottom'
+            }
+        },
+        {
+            element: '#matrix-container',
+            popover: {
+                title: 'Matriz A y Vector b',
+                description:
+                    'Ingresa los coeficientes de la matriz en los cuadros blancos ' +
+                    'y los términos independientes en los cuadros resaltados a la derecha.<br><br>' +
+                    'Usa números reales o enteros.',
+                side: 'top'
+            }
+        },
+        {
+            element: '#btn-calc-lin',
+            popover: {
+                title: 'Resolver',
+                description:
+                    'Ejecuta el algoritmo seleccionado y muestra el vector solución ' +
+                    'junto con el desglose paso a paso del proceso matemático.',
+                side: 'top'
+            }
+        },
+        {
+            element: '#resultado-lin-container',
+            popover: {
+                title: 'Resultados y Pasos',
+                description:
+                    'Aquí aparecerá la solución final (X) y las matrices intermedias ' +
+                    'generadas durante el cálculo (como la matriz escalonada o las matrices L y U).',
                 side: 'top'
             }
         },
