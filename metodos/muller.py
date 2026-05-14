@@ -1,5 +1,6 @@
 import math
 import cmath
+import numpy as np
 
 def fmt_c(val):
     if isinstance(val, complex):
@@ -17,20 +18,18 @@ def metodo_muller(x0, x1, x2, tol_porcentaje, a_coefs):
     def f_eval(x_val):
         return complex(sum(c_val * (x_val ** i) for i, c_val in enumerate(a_coefs)))
         
-    iteracion = 0
+    iteracion = 1
     max_iter = 100
     consola.append("=== INICIANDO MÜLLER ===")
     
-    pts = [x0, x1, x2]
+    # x0, x1, x2 son los valores iniciales
+    # x3 será el primer valor calculado
+    x_prev2, x_prev1, x_curr = x0, x1, x2
     
     while iteracion <= max_iter:
-        curr_x0 = pts[iteracion]
-        curr_x1 = pts[iteracion+1]
-        curr_x2 = pts[iteracion+2]
-        
-        h0 = curr_x1 - curr_x0
-        h1 = curr_x2 - curr_x1
-        f0, f1, f2 = f_eval(curr_x0), f_eval(curr_x1), f_eval(curr_x2)
+        h0 = x_prev1 - x_prev2
+        h1 = x_curr - x_prev1
+        f0, f1, f2 = f_eval(x_prev2), f_eval(x_prev1), f_eval(x_curr)
         
         d0 = (f1 - f0) / h0 if h0 != 0 else 0
         d1 = (f2 - f1) / h1 if h1 != 0 else 0
@@ -39,51 +38,45 @@ def metodo_muller(x0, x1, x2, tol_porcentaje, a_coefs):
         c = f2
         
         rad = cmath.sqrt(b**2 - 4*a*c)
-        b_plus = b + rad
-        b_minus = b - rad
-        
-        if abs(b_plus) > abs(b_minus):
-            den = b_plus
-        else:
-            den = b_minus
+        den = (b + rad) if abs(b + rad) > abs(b - rad) else (b - rad)
             
         if den == 0:
             dx = 0
-            consola.append("Advertencia: Denominador cero, asumiendo dx = 0.")
+            consola.append("Advertencia: Denominador cero.")
         else:
             dx = -2 * c / den
             
-        x3 = curr_x2 + dx
-        pts.append(x3)
+        x_next = x_curr + dx
         
-        if iteracion == 0:
-            error_rp = 100.0
-            error_str = "---"
-            condicion = "---"
+        # Error relativo porcentual comparando con la aproximación anterior
+        if abs(x_next) > 0:
+            error_rp = abs((x_next - x_curr) / x_next) * 100.0
         else:
-            val_k = pts[iteracion]
-            val_k_minus_1 = pts[iteracion-1]
-            if abs(val_k) > 0:
-                error_rp = abs((val_k - val_k_minus_1) / val_k) * 100.0
-            else:
-                error_rp = 100.0
-            error_str = f"{error_rp.real:.6f}"
-            condicion = "Finalizar" if error_rp.real < tol_porcentaje else "Continuar"
+            error_rp = 0.0
+            
+        error_str = f"{error_rp.real:.6f}%"
+        condicion = "Finalizar" if error_rp.real < tol_porcentaje else "Continuar"
         
         resultados.append({
-            'iter': iteracion, 'x1': fmt_c(curr_x0), 'x2': fmt_c(curr_x1),
-            'h0': fmt_c(h0), 'h1': fmt_c(h1), 'f1': fmt_c(f0), 'f2': fmt_c(f1),
-            'd0': fmt_c(d0), 'd1': fmt_c(d1), 'a': fmt_c(a), 'b': fmt_c(b), 'c': fmt_c(c),
-            'b_plus': fmt_c(b_plus), 'b_minus': fmt_c(b_minus), 'error': error_str, 'condicion': condicion
+            'iter': iteracion, 
+            'x1': fmt_c(x_prev2), 'x2': fmt_c(x_prev1), 'x3': fmt_c(x_curr),
+            'h0': fmt_c(h0), 'h1': fmt_c(h1), 
+            'f1': fmt_c(f0), 'f2': fmt_c(f1), 'f3': fmt_c(f2),
+            'd0': fmt_c(d0), 'd1': fmt_c(d1), 
+            'a': fmt_c(a), 'b': fmt_c(b), 'c': fmt_c(c),
+            'raiz': fmt_c(x_next), 'error': error_str, 'condicion': condicion
         })
         
-        if iteracion > 0 and error_rp.real < tol_porcentaje:
-            consola.append(f"\\nConvergió en {iteracion} iteraciones.")
-            res_raiz = pts[iteracion]
-            consola.append(f"=== RAÍZ ENCONTRADA ===\\n X = {fmt_c(res_raiz)}")
+        if error_rp.real < tol_porcentaje:
+            consola.append(f"\nConvergió en {iteracion} iteraciones.")
+            res_raiz = x_next
+            consola.append(f"=== RAÍZ ENCONTRADA ===\n X = {fmt_c(res_raiz)}")
             break
             
+        # Actualizar para la siguiente iteración
+        x_prev2, x_prev1, x_curr = x_prev1, x_curr, x_next
         iteracion += 1
+        
         if iteracion > max_iter:
             consola.append("Error: divergencia o límite de iteraciones.")
             return {"error": "Divergencia o límite de iteraciones.", "consola": consola}

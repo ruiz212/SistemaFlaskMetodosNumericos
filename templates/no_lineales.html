@@ -6,13 +6,17 @@
 
 {% block content %}
 <div class="page-container fade-in" id="page-content-nl">
-    <h2 class="page-title">Buscador de Raíces (Funciones)</h2>
-    
+    <h2 class="page-title">Buscador de Raíces (Ecuaciones)</h2>
+
     <div class="glass-panel form-panel">
         <div class="form-row">
             <div class="input-group flex-2">
                 <label>Ecuación f(x):</label>
-                <input type="text" id="ecuacion-nl" placeholder="Ej: x**3 - 3.5*x**2 + 2.75*x - 0.5" class="input-control" oninput="previewMath('ecuacion-nl')">
+                <input type="text" id="ecuacion-nl" placeholder="Ej: x**3 - 3.5*x**2 + 2.75*x - 0.5"
+                    class="input-control" oninput="previewMath('ecuacion-nl')">
+                <button id="btn-despejar-x" class="btn btn-secondary btn-sm mt-2" style="display:none;" onclick="obtenerDespejes()">
+                    <i class="ph-bold ph-magic-wand"></i> Despejar x
+                </button>
                 <div class="math-preview" id="preview-ecuacion-nl"></div>
             </div>
             <div class="input-group">
@@ -46,6 +50,19 @@
             <button class="btn btn-primary" id="btn-calc-nl" onclick="calcularNL()">Calcular</button>
             <button class="btn btn-danger" onclick="limpiarNL()">Limpiar</button>
         </div>
+        </div>
+    </div>
+
+    <!-- Panel de Despejes (Solo para Punto Fijo) -->
+    <div id="despejes-container" class="glass-panel mt-4 despejes-container" style="display:none;">
+        <div class="despejes-title">
+            <i class="ph-bold ph-magic-wand"></i>
+            <span>Opciones de Despeje: x = g(x)</span>
+        </div>
+        <p class="text-muted mb-3" style="font-size: 0.9rem;">Haz clic en una opción para usarla como función de iteración.</p>
+        <div id="despejes-list" class="despejes-list">
+            <!-- Se llena dinámicamente -->
+        </div>
     </div>
 
     <div class="table-container glass-panel mt-4">
@@ -67,10 +84,12 @@
         <div id="resultado-nl" class="resultado-tarjeta flex-3 text-center">
             Esperando parámetros...
         </div>
-        <button class="btn btn-success flex-1" id="btn-exportar-nl" disabled onclick="exportarExcel('tabla-nl', 'NoLineales')">
+        <button class="btn btn-success flex-1" id="btn-exportar-nl" disabled
+            onclick="exportarExcel('tabla-nl', 'NoLineales')">
             <i class="ph ph-file-csv"></i> Excel
         </button>
-        <button class="btn btn-warning flex-1" id="btn-pdf-nl" disabled onclick="exportarPDF('page-content-nl', 'Reporte_Metodos_Numéricos')">
+        <button class="btn btn-warning flex-1" id="btn-pdf-nl" disabled
+            onclick="exportarPDF('page-content-nl', 'Reporte_Metodos_Numéricos')">
             <i class="ph ph-file-pdf"></i> PDF
         </button>
     </div>
@@ -118,42 +137,42 @@
 <script src="{{ url_for('static', filename='js/grafica_nl.js') }}"></script>
 
 <script>
-// ── Sobreescribir calcularNL para llamar también a la gráfica ──────────────
-(function () {
-    const _calcularNLOriginal = window.calcularNL;
+    // ── Sobreescribir calcularNL para llamar también a la gráfica ──────────────
+    (function () {
+        const _calcularNLOriginal = window.calcularNL;
 
-    window.calcularNL = async function (force = false) {
-        await _calcularNLOriginal(force);
+        window.calcularNL = async function (force = false) {
+            await _calcularNLOriginal(force);
 
-        // Después del cálculo, solicitar la gráfica si hay resultado exitoso
-        const resultDiv = document.getElementById('resultado-nl');
-        if (resultDiv && resultDiv.classList.contains('success')) {
-            const ecuacion   = document.getElementById('ecuacion-nl').value;
-            const metodo     = document.getElementById('metodo-nl').value;
-            const angulo     = document.getElementById('angulo-nl')?.value ?? 'rad';
-            const resultados = window._lastResultadosNL || [];
+            // Después del cálculo, solicitar la gráfica si hay resultado exitoso
+            const resultDiv = document.getElementById('resultado-nl');
+            if (resultDiv && resultDiv.classList.contains('success')) {
+                const ecuacion = document.getElementById('ecuacion-nl').value;
+                const metodo = document.getElementById('metodo-nl').value;
+                const angulo = document.getElementById('angulo-nl')?.value ?? 'rad';
+                const resultados = window._lastResultadosNL || [];
 
-            await solicitarGraficaNL(ecuacion, metodo, resultados, angulo);
+                await solicitarGraficaNL(ecuacion, metodo, resultados, angulo);
 
-            // Actualizar footer de la gráfica
-            const footerEl = document.getElementById('grafica-footer');
-            if (footerEl && window._lastRaiz) {
-                footerEl.innerHTML = `
+                // Actualizar footer de la gráfica
+                const footerEl = document.getElementById('grafica-footer');
+                if (footerEl && window._lastRaiz) {
+                    footerEl.innerHTML = `
                     <div class="grafica-footer-inner">
                         <span class="footer-label">Raíz encontrada</span>
                         <span class="footer-value">${window._lastRaiz}</span>
                         <span class="footer-method">${metodo}</span>
                     </div>`;
+                }
             }
-        }
-    };
+        };
 
-    // Limpiar también la gráfica
-    const _limpiarNLOriginal = window.limpiarNL;
-    window.limpiarNL = function () {
-        _limpiarNLOriginal();
-        limpiarGraficaNL();
-    };
-})();
+        // Limpiar también la gráfica
+        const _limpiarNLOriginal = window.limpiarNL;
+        window.limpiarNL = function () {
+            _limpiarNLOriginal();
+            limpiarGraficaNL();
+        };
+    })();
 </script>
 {% endblock %}

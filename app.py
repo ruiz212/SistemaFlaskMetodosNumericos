@@ -15,6 +15,7 @@ from metodos.sistemas_lineales import (
     eliminacion_gaussiana, factorizacion_lu, 
     regla_de_cramer, gauss_jordan, matriz_inversa
 )
+from metodos.despejes import despejar_ecuacion
 
 app = Flask(__name__)
 
@@ -103,6 +104,25 @@ def calcular_nl():
         return jsonify({'error': f"Error en los valores de entrada: {ve}"})
     except Exception as e:
         return jsonify({'error': f"Error inesperado: {str(e)}"})
+
+@app.route('/api/despejar_punto_fijo', methods=['POST'])
+def api_despejar_punto_fijo():
+    data = request.json
+    ecuacion = data.get('ecuacion', '').strip()
+    x0_str = data.get('x0')
+    
+    if not ecuacion:
+        return jsonify({'error': 'Ingresa una ecuación para despejar.'})
+    
+    x0 = None
+    if x0_str:
+        try:
+            x0 = float(x0_str)
+        except:
+            pass
+            
+    res = despejar_ecuacion(ecuacion, x0)
+    return jsonify(res)
 
 @app.route('/api/grafica_nl', methods=['POST'])
 def grafica_nl():

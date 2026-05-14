@@ -1,5 +1,6 @@
 import re
 import sympy as sp
+import numpy as np
 from functools import lru_cache
 
 # ─── Variable canónica ────────────────────────────────────────────────────────
@@ -92,9 +93,13 @@ def compilar_funciones_base(ecuacion_texto, modo_angulo='rad'):
 
 def evaluar_f(val, expr_simbolica, x_sym, funcion_eval):
     try:
-        return funcion_eval(val)
-    except (ValueError, TypeError, ZeroDivisionError, OverflowError):
+        res = funcion_eval(val)
+        if res is None or not np.isfinite(res).all():
+            raise ValueError("Resultado no finito")
+        return res
+    except Exception:
         try:
+            # Fallback a SymPy (más lento pero más robusto con precision variable)
             res = expr_simbolica.evalf(subs={x_sym: val})
             return complex(res) if res.is_complex else float(res)
         except Exception:
@@ -103,8 +108,11 @@ def evaluar_f(val, expr_simbolica, x_sym, funcion_eval):
 
 def evaluar_df(val, derivada_simbolica, x_sym, derivada_eval):
     try:
-        return derivada_eval(val)
-    except (ValueError, TypeError, ZeroDivisionError, OverflowError):
+        res = derivada_eval(val)
+        if res is None or not np.isfinite(res).all():
+            raise ValueError("Resultado no finito")
+        return res
+    except Exception:
         try:
             res = derivada_simbolica.evalf(subs={x_sym: val})
             return complex(res) if res.is_complex else float(res)

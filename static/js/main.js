@@ -217,6 +217,18 @@ async function exportarPDF(elementId, filename) {
 function actualizarCamposNL() {
     const metodo = document.getElementById('metodo-nl')?.value;
     const container = document.getElementById('campos-dinamicos-nl');
+    const btnDespejar = document.getElementById('btn-despejar-x');
+    const panelDespejes = document.getElementById('despejes-container');
+
+    // Mostrar/ocultar botón de despeje
+    if (btnDespejar) {
+        btnDespejar.style.display = (metodo === 'Punto fijo') ? 'inline-block' : 'none';
+    }
+    // Ocultar panel de despejes si no es Punto Fijo
+    if (panelDespejes && metodo !== 'Punto fijo') {
+        panelDespejes.style.display = 'none';
+    }
+
     if (!container) return;
 
     let html = '';
@@ -345,8 +357,101 @@ function limpiarNL() {
         }
         document.getElementById('btn-exportar-nl').disabled = true;
         if (document.getElementById('btn-pdf-nl')) document.getElementById('btn-pdf-nl').disabled = true;
+        const panelDespejes = document.getElementById('despejes-container');
+        if (panelDespejes) panelDespejes.style.display = 'none';
         actualizarCamposNL();
     });
+}
+
+/**
+ * Obtiene despejes simbólicos para Punto Fijo
+ */
+async function obtenerDespejes() {
+    const ecuacion = document.getElementById('ecuacion-nl')?.value;
+    const x0 = document.getElementById('nl-x0')?.value;
+    
+    if (!ecuacion) return showAlert('Atención', 'Ingresa una ecuación f(x) primero.', 'warning');
+
+    const container = document.getElementById('despejes-container');
+    const list = document.getElementById('despejes-list');
+    if (!container || !list) return;
+
+    list.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-muted);">
+            <i class="ph-bold ph-spinner-gap spin" style="font-size: 1.5rem; margin-bottom: 0.8rem; display: block; margin: 0 auto 0.8rem;"></i>
+            Analizando posibilidades simbólicas y convergencia...
+        </div>`;
+    container.style.display = 'block';
+
+    const data = await performRequest('/api/despejar_punto_fijo', { ecuacion, x0 }, 'btn-despejar-x');
+
+    if (data.error) {
+        list.innerHTML = `<div style="grid-column: 1/-1; color: var(--color-danger); text-align: center; padding: 1rem;">${data.error}</div>`;
+        return;
+    }
+
+    if (!data.despejes || data.despejes.length === 0) {
+        list.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 1rem;">No se encontraron despejes automáticos útiles. Prueba una ecuación más simple o despéjala manualmente.</div>`;
+        return;
+    }
+
+    list.innerHTML = '';
+    data.despejes.forEach((d, index) => {
+        const card = document.createElement('div');
+        card.className = `despeje-card ${d.converge ? 'convergent' : (d.eval !== null ? 'divergent' : '')}`;
+        
+        const badge = d.converge ? '<span class="conv-badge success">Converge</span>' : 
+                      d.eval !== null ? '<span class="conv-badge error">Diverge</span>' : '';
+                      
+        const evalHtml = d.eval !== null ? `
+            <div class="despeje-step-title">PASO 3: Evaluación Numérica ($x_0$)</div>
+            <div class="despeje-eval">|g'(${x0})| ≈ ${d.eval.toFixed(6)}</div>
+            <div class="despeje-step-title">PASO 4: Criterio y Conclusión</div>
+            <div class="despeje-conclusion">${d.converge ? 'EL MÉTODO CONVERGE' : 'EL MÉTODO DIVERGE'}</div>
+        ` : '';
+
+        card.innerHTML = `
+            ${badge}
+            <div class="despeje-index">g<sub>${index + 1}</sub>(x)</div>
+            
+            <div class="despeje-step-title">PASO 1: Despeje Natural</div>
+            <div class="despeje-math"></div>
+            
+            <div class="despeje-step-title">PASO 2: Derivada Compacta</div>
+            <div class="despeje-deriv-math"></div>
+            
+            ${evalHtml}
+            
+            <div class="despeje-action">Seleccionar esta función</div>
+        `;
+        
+        card.onclick = () => {
+            document.getElementById('ecuacion-nl').value = d.expr;
+            previewMath('ecuacion-nl');
+            showAlert('Función Seleccionada', `Se ha cargado g${index+1}(x) como función de iteración.`, 'success');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+        
+        list.appendChild(card);
+        
+        if (window.katex) {
+            const mathEl = card.querySelector('.despeje-math');
+            const derivEl = card.querySelector('.despeje-deriv-math');
+            window.katex.render(`x = ${d.latex}`, mathEl, { throwOnError: false, displayMode: true });
+            window.katex.render(`g'_{${index+1}}(x) = ${d.derivada}`, derivEl, { throwOnError: false, displayMode: true });
+        }
+    });
+
+    if (window.anime) {
+        window.anime({
+            targets: '.despeje-card',
+            translateY: [20, 0],
+            opacity: [0, 1],
+            delay: window.anime.stagger(80),
+            duration: 600,
+            easing: 'easeOutQuart'
+        });
+    }
 }
 
 // ─── Polinomios ──────────────────────────────────────────────────────────────
