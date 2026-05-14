@@ -415,10 +415,14 @@ async function obtenerDespejes() {
             <div class="despeje-index">g<sub>${index + 1}</sub>(x)</div>
             
             <div class="despeje-step-title">PASO 1: Despeje Natural</div>
-            <div class="despeje-math"></div>
+            <div class="math-container">
+                <div class="despeje-math"></div>
+            </div>
             
             <div class="despeje-step-title">PASO 2: Derivada Compacta</div>
-            <div class="despeje-deriv-math"></div>
+            <div class="math-container">
+                <div class="despeje-deriv-math"></div>
+            </div>
             
             ${evalHtml}
             

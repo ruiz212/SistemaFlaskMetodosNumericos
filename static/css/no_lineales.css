@@ -392,8 +392,37 @@ html.light .grafica-footer-inner {
     background: rgba(0,0,0,0.15);
     padding: 10px;
     border-radius: 6px;
-    margin-bottom: 5px;
+    margin-bottom: 0;
     border: 1px solid rgba(255,255,255,0.03);
+    min-width: 100%;
+}
+
+.math-container {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* Custom Scrollbar for Math Formulas */
+.math-container::-webkit-scrollbar {
+    height: 3px;
+}
+
+.math-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.math-container::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 0, 0.3); /* Verde oliva sutil */
+    border-radius: 10px;
+}
+
+.math-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 0, 0.6);
 }
 
 .despeje-eval {
