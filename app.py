@@ -27,6 +27,10 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
+@app.route('/google63f1328f737677ff.html')
+def google_verification():
+    return "google-site-verification: google63f1328f737677ff.html"
+
 @app.route('/no-lineales')
 def no_lineales():
     return render_template('no_lineales.html')
