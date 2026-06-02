@@ -16,6 +16,10 @@
                     <option value="Diferencias Divididas">Diferencias Divididas (Newton)</option>
                 </select>
             </div>
+            <div class="input-group flex-1">
+                <label>Tolerancia:</label>
+                <input type="text" id="tol-inter" value="0.001" class="input-control text-center">
+            </div>
             <div class="form-actions mt-4 flex-1">
                 <button class="btn btn-primary" id="btn-calc-inter" onclick="calcularInter()">Calcular</button>
             </div>
@@ -73,13 +77,43 @@ async function calcularInter() {
         y.push(document.getElementById(`inter-y-${i}`).value);
     }
     
-    const payload = { x, y, metodo: document.getElementById('metodo-inter').value };
+    const payload = { 
+        x, 
+        y, 
+        metodo: document.getElementById('metodo-inter').value,
+        tol: document.getElementById('tol-inter').value
+    };
     const data = await performRequest('/api/calcular_interpolacion', payload, 'btn-calc-inter');
     
     if (data.error) return showAlert('Error', data.error, 'error');
     
     document.getElementById('resultado-inter-container').style.display = 'flex';
-    document.getElementById('resultado-inter').innerHTML = `<strong>Polinomio:</strong> P(x) = ${data.coefs.map((c, i) => `${c.toFixed(4)}${i>0 ? `(x-x_0)...(x-x_${i-1})` : ''}`).join(' + ')}`;
+    document.getElementById('resultado-inter').innerHTML = `<strong>Polinomio Óptimo (Grado ${data.grado}):</strong> P(x) = ${data.ecuacion}`;
+    
+    // Renderizar la tabla de diferencias divididas
+    const thead = document.getElementById('thead-inter');
+    const tbody = document.getElementById('tbody-inter');
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+    
+    if (data.tabla && data.tabla.length > 0) {
+        let theadHtml = '<tr><th>x_i</th><th>y_i</th>';
+        for (let i = 1; i < data.tabla[0].length; i++) {
+            theadHtml += `<th>Orden ${i}</th>`;
+        }
+        theadHtml += '</tr>';
+        thead.innerHTML = theadHtml;
+        
+        data.tabla.forEach((row, i) => {
+            let trHtml = `<tr><td>${document.getElementById(`inter-x-${i}`).value}</td>`;
+            row.forEach((val) => {
+                trHtml += `<td>${val !== "" ? Number(val).toFixed(4) : ""}</td>`;
+            });
+            trHtml += '</tr>';
+            tbody.innerHTML += trHtml;
+        });
+    }
+    
     playSound('success');
 }
 

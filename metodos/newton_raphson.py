@@ -37,6 +37,7 @@ def newton_raphson(ci, tol, f, df):
             'error': error_str
         })
         
+        # Condición de parada
         if error_rp < tol or f_ci == 0:
             raiz_encontrada = ci_mas_1
             break

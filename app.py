@@ -13,7 +13,8 @@ from metodos.sistemas import resolver_sistema_no_lineal
 from metodos.grafica_nl import generar_datos_grafica
 from metodos.sistemas_lineales import (
     eliminacion_gaussiana, factorizacion_lu, 
-    regla_de_cramer, gauss_jordan, matriz_inversa
+    regla_de_cramer, gauss_jordan, matriz_inversa,
+    metodo_jacobi, metodo_gauss_seidel
 )
 from metodos.despejes import despejar_ecuacion
 
@@ -46,6 +47,14 @@ def sistemas():
 @app.route('/sistemas-lineales')
 def sistemas_lineales():
     return render_template('sistemas_lineales.html')
+
+@app.route('/iterativos')
+def iterativos():
+    return render_template('iterativos.html')
+
+@app.route('/interpolacion')
+def interpolacion():
+    return render_template('interpolacion.html')
 
 
 # =========================================================================
@@ -269,6 +278,16 @@ def calcular_sis_lin():
         res = gauss_jordan(A, b)
     elif metodo == "Matriz Inversa":
         res = matriz_inversa(A, b)
+    elif metodo == "Jacobi":
+        x0 = data.get('x0', [0.0]*len(b))
+        tol = float(data.get('tol', 0.001))
+        max_iter = int(data.get('max_iter', 100))
+        res = metodo_jacobi(A, b, x0, tol, max_iter)
+    elif metodo == "Gauss-Seidel":
+        x0 = data.get('x0', [0.0]*len(b))
+        tol = float(data.get('tol', 0.001))
+        max_iter = int(data.get('max_iter', 100))
+        res = metodo_gauss_seidel(A, b, x0, tol, max_iter)
     else:
         return jsonify({'error': 'Método no soportado'})
         
@@ -437,19 +456,40 @@ def grafica_sis_3d():
 
 
 @app.route('/api/calcular_interpolacion', methods=['POST'])
-
 def calcular_interpolacion():
     data = request.json
     x_puntos = np.array(data.get('x'), dtype=float)
     y_puntos = np.array(data.get('y'), dtype=float)
     metodo = data.get('metodo')
     
-    from metodos.interpolacion import diferencias_divididas
-    
     if metodo == "Diferencias Divididas":
-        coefs, _ = diferencias_divididas(x_puntos, y_puntos)
-        return jsonify({'success': True, 'coefs': coefs})
-    
+        from metodos.interpolacion_newton import NewtonDividedDifferences
+        try:
+            # Tolerancia por defecto o desde el frontend si existiera
+            tolerancia = float(data.get('tol', 0.001))
+            interpolador = NewtonDividedDifferences(x_puntos, y_puntos, tolerancia=tolerancia)
+            interpolador.calcular_polinomio_optimo()
+            
+            coefs = interpolador.coeficientes.tolist() if hasattr(interpolador.coeficientes, 'tolist') else interpolador.coeficientes
+            ecuacion = interpolador.obtener_ecuacion_string()
+            grado = interpolador.grado_optimo
+            
+            # Formatear la tabla para devolverla
+            tabla_serializable = []
+            if interpolador.tabla is not None:
+                for row in interpolador.tabla:
+                    tabla_serializable.append([float(val) if not np.isnan(val) else "" for val in row])
+                    
+            return jsonify({
+                'success': True, 
+                'coefs': coefs,
+                'ecuacion': ecuacion,
+                'grado': grado,
+                'tabla': tabla_serializable
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)})
+            
     return jsonify({'error': 'Método no soportado'})
 
 if __name__ == '__main__':

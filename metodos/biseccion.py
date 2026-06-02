@@ -42,10 +42,12 @@ def biseccion(a, b, tol, f):
             error_rp  = 0.0
             error_str = "0.000000%"
         
+        ea = abs(b - a)
+        
         resultados.append({
-            'iter': i, 'a': f"{a:.6f}", 'b': f"{b:.6f}", 'c': f"{c_actual:.6f}",
-            'fa': f"{fa:.6f}", 'fb': f"{fb:.6f}", 'fc': f"{fc:.6f}", 
-            'prueba': f"{prueba_signo:.6f}", 'error': error_str
+            'iter': i, 'a': f"{a:.6f}", 'c': f"{c_actual:.6f}", 'b': f"{b:.6f}",
+            'fa': f"{fa:.6f}", 'fc': f"{fc:.6f}", 'fb': f"{fb:.6f}", 
+            'prueba': f"{prueba_signo:.6f}", 'ea': f"{ea:.6f}", 'error': error_str
         })
         
         # Condición de parada: error < tol (desde iter 2 en adelante) o raíz exacta

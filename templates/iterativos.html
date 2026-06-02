@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container fade-in">
+    <h2 class="page-title">Métodos Iterativos</h2>
+    
+    <div class="glass-panel form-panel">
+        <div class="form-row align-center">
+            <div class="input-group flex-1">
+                <label>Dimensión (n):</label>
+                <input type="number" id="n-iter" value="3" min="2" max="10" class="input-control text-center" onchange="generarMatrizIter()">
+            </div>
+            
+            <div class="input-group flex-1">
+                <label>Método:</label>
+                <select id="metodo-iterativo" class="input-control">
+                    <option value="Jacobi">Jacobi</option>
+                    <option value="Gauss-Seidel">Gauss-Seidel</option>
+                </select>
+            </div>
+
+            <div class="input-group" style="max-width: 120px;">
+                <label>Tolerancia:</label>
+                <input type="text" id="tol-iter" value="0.001" class="input-control text-center">
+            </div>
+            <div class="input-group" style="max-width: 90px;">
+                <label>Iteraciones:</label>
+                <input type="number" id="iter-max" value="50" class="input-control text-center">
+            </div>
+
+            <div class="form-actions mt-4 flex-1 flex-row gap-2">
+                <button class="btn btn-primary" id="btn-calc-iter" onclick="calcularIterativo()">Resolver</button>
+                <button class="btn btn-danger" id="btn-limpiar-iter" onclick="limpiarIterativo()">Limpiar</button>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <label class="section-label">Matriz A y Vector b ([A|b]):</label>
+            <div id="matrix-container-iter" class="matrix-grid">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <div id="resultado-iter-container" class="mt-4" style="display:none;">
+        <div class="glass-panel">
+            <label class="section-label">Solución:</label>
+            <div id="solucion-iter" class="solucion-chips"></div>
+        </div>
+        
+        <div class="glass-panel mt-4">
+            <label class="section-label">Tabla de Iteraciones:</label>
+            <div id="pasos-iter" class="steps-container"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function generarMatrizIter() {
+    const n = parseInt(document.getElementById('n-iter').value);
+    const container = document.getElementById('matrix-container-iter');
+    
+    container.style.gridTemplateColumns = `repeat(${n + 1}, 1fr)`;
+    
+    let html = '';
+    for(let i=0; i<n; i++) {
+        for(let j=0; j<n; j++) {
+            html += `<input type="text" id="ai-${i}-${j}" class="input-control text-center" placeholder="a_${i+1},${j+1}">`;
+        }
+        html += `<input type="text" id="bi-${i}" class="input-control text-center accent" placeholder="b_${i+1}">`;
+    }
+    container.innerHTML = html;
+}
+
+async function calcularIterativo() {
+    const n = parseInt(document.getElementById('n-iter').value);
+    const A = [], b = [], x0 = [];
+    for(let i=0; i<n; i++) {
+        const row = [];
+        for(let j=0; j<n; j++) {
+            row.push(parseFloat(document.getElementById(`ai-${i}-${j}`).value || 0));
+        }
+        A.push(row);
+        b.push(parseFloat(document.getElementById(`bi-${i}`).value || 0));
+        x0.push(0);
+    }
+    
+    const payload = {
+        A, b,
+        metodo: document.getElementById('metodo-iterativo').value,
+        x0: x0,
+        tol: parseFloat(document.getElementById('tol-iter').value),
+        max_iter: parseInt(document.getElementById('iter-max').value)
+    };
+
+    const data = await performRequest('/api/calcular_sis_lin', payload, 'btn-calc-iter');
+    
+    if (data.error) return showAlert('Error', data.error, 'error');
+    
+    document.getElementById('resultado-iter-container').style.display = 'block';
+    const solDiv = document.getElementById('solucion-iter');
+    let solHtml = data.resultado.solucion.map((val, i) => `
+        <div class="sol-chip">x<sub>${i+1}</sub> = ${val.toFixed(6)}</div>
+    `).join('');
+    solDiv.innerHTML = solHtml;
+    
+    let pasosHtml = "";
+    
+    if (data.resultado.pasos_iterativos) {
+        let thCols = "";
+        for (let i=0; i<n; i++) {
+            thCols += `<th>x${i+1}</th>`;
+        }
+        
+        let filas = "";
+        data.resultado.pasos_iterativos.forEach(p => {
+            let tdIniciales = p.x_old.map(v => `<td>${v.toFixed(8)}</td>`).join('');
+            let tdNuevos = p.x_new.map(v => `<td>${v.toFixed(8)}</td>`).join('');
+            let tdErrores = p.errores.map(e => `<td>${e === null ? "" : e.toFixed(6) + "%"}</td>`).join('');
+            let tdDecisiones = p.decisiones.map(d => `<td>${d}</td>`).join('');
+            
+            filas += `
+                <tr>
+                    <td>${p.iteracion}</td>
+                    ${tdIniciales}
+                    ${tdNuevos}
+                    ${tdErrores}
+                    ${tdDecisiones}
+                </tr>
+            `;
+        });
+        
+        pasosHtml = `
+            <div class="table-responsive">
+                <table class="results-table sleek-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Iteración</th>
+                            <th colspan="${n}">Valores Iniciales</th>
+                            <th colspan="${n}">Valores Nuevos</th>
+                            <th colspan="${n}">Error R</th>
+                            <th colspan="${n}">Decisión</th>
+                        </tr>
+                        <tr>
+                            ${thCols}
+                            ${thCols}
+                            ${thCols}
+                            ${thCols}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filas}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    document.getElementById('pasos-iter').innerHTML = pasosHtml || "No hay pasos para mostrar.";
+    playSound('success');
+}
+
+async function limpiarIterativo() {
+    if (window.animarLimpieza) {
+        window.animarLimpieza(() => {
+            generarMatrizIter();
+            document.getElementById('resultado-iter-container').style.display = 'none';
+            document.getElementById('solucion-iter').innerHTML = '';
+            document.getElementById('pasos-iter').innerHTML = '';
+        });
+    } else {
+        generarMatrizIter();
+        document.getElementById('resultado-iter-container').style.display = 'none';
+        document.getElementById('solucion-iter').innerHTML = '';
+        document.getElementById('pasos-iter').innerHTML = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', generarMatrizIter);
+</script>
+
+<style>
+.matrix-grid {
+    display: grid;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.matrix-grid input.accent {
+    border-color: var(--accent-primary);
+    background: rgba(245, 158, 11, 0.1);
+}
+.solucion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.sol-chip {
+    background: var(--accent-blue);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+.results-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 10px;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 8px;
+    background: rgba(15, 15, 15, 0.6);
+}
+.results-table th, .results-table td {
+    padding: 14px 10px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.results-table td {
+    font-family: monospace;
+    font-size: 0.95rem;
+    color: #e2e8f0;
+}
+.results-table th {
+    background: rgba(20, 20, 20, 0.9);
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+.results-table tr {
+    transition: all 0.2s ease;
+}
+.results-table tr:hover {
+    background: rgba(245, 158, 11, 0.08);
+    border-left: 3px solid var(--accent-primary);
+}
+.results-table tr:last-child td {
+    border-bottom: none;
+}
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+    border-radius: 8px;
+}
+</style>
+{% endblock %}

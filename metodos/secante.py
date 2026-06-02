@@ -63,6 +63,7 @@ def secante(x0, x1, tol, f):
             'error': error_str
         })
         
+        # Condición de parada
         if error_rp < tol or f_nuevo == 0:
             raiz_encontrada = c_nuevo
             break

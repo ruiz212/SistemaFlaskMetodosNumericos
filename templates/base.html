@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Suite de Métodos Numéricos Pro: Soluciones precisas para ecuaciones no lineales, polinomios y sistemas.">
+    <meta name="description" content="Calculadora online de métodos numéricos para estudiantes de ingeniería. Resuelve ecuaciones no lineales, sistemas lineales, polinomios e interpolación paso a paso.">
+    <meta name="keywords" content="calculadora metodos numericos, resolver ecuaciones no lineales online, metodo biseccion online, calculadora jacobi y gauss seidel, interpolacion de newton online, calculadora raices polinomios, metodos numericos para ingenieria, resolver sistemas de ecuaciones iterativo, graficadora metodos numericos, calculadora metodo muller y bairstow">
     <meta name="theme-color" content="#6366f1">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-    <title>Suite Numérica Pro</title>
+    <title>Calculadora de Métodos Numéricos | Resuelve Ecuaciones y Sistemas Paso a Paso</title>
+    <!-- Favicon del Sistema -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -80,6 +83,12 @@
                 </a>
                 <a href="{{ url_for('sistemas_lineales') }}" class="nav-item page-link {% if request.path == '/sistemas-lineales' %}active{% endif %}">
                     <i class="ph ph-matrix"></i> Sistemas Lin
+                </a>
+                <a href="{{ url_for('iterativos') }}" class="nav-item page-link {% if request.path == '/iterativos' %}active{% endif %}">
+                    <i class="ph ph-arrows-clockwise"></i> Iterativos
+                </a>
+                <a href="{{ url_for('interpolacion') }}" class="nav-item page-link {% if request.path == '/interpolacion' %}active{% endif %}">
+                    <i class="ph ph-trend-up"></i> Interpolación
                 </a>
                 
                 <div class="theme-toggle" id="theme-btn" style="cursor: pointer; margin-left: 16px; font-size: 20px; color: var(--text-primary); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; transition: background 0.3s;" title="Cambiar Tema">

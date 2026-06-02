@@ -126,3 +126,121 @@ def matriz_inversa(A, b):
         "pasos": pasos,
         "msg_final": "Se obtuvo la inversa mediante Gauss-Jordan sobre [A|I] y luego se multiplicó X = A⁻¹ * b"
     }
+
+def metodo_jacobi(A, b, x0, tol, max_iter):
+    A = np.array(A, dtype=float)
+    b = np.array(b, dtype=float)
+    x0 = np.array(x0, dtype=float)
+    n = len(b)
+    
+    for i in range(n):
+        if abs(A[i, i]) < 1e-12:
+            return {"error": f"Elemento en diagonal principal A[{i+1},{i+1}] es cero. El método no puede continuar."}
+            
+    pasos = []
+    x = x0.copy()
+    
+    for k in range(1, max_iter + 1):
+        x_new = np.zeros_like(x)
+        errores = np.zeros_like(x)
+        
+        for i in range(n):
+            suma = 0
+            for j in range(n):
+                if i != j:
+                    suma += A[i, j] * x[j]
+            x_new[i] = (b[i] - suma) / A[i, i]
+            
+            if k == 1:
+                errores[i] = -1.0
+            else:
+                if x_new[i] != 0:
+                    errores[i] = abs((x_new[i] - x[i]) / x_new[i]) * 100
+                else:
+                    errores[i] = 0.0
+                
+        decisiones = []
+        for i in range(n):
+            if k == 1:
+                decisiones.append("")
+            elif (errores[i] / 100.0) > tol:
+                decisiones.append("Continuar")
+            else:
+                decisiones.append("Finalizar")
+                
+        all_final_now = (k > 1) and all(d == "Finalizar" for d in decisiones)
+        
+        pasos.append({
+            "iteracion": k,
+            "x_old": x.tolist(),
+            "x_new": x_new.tolist(),
+            "errores": [None if e == -1.0 else e for e in errores.tolist()],
+            "decisiones": decisiones
+        })
+        
+        x = x_new.copy()
+        
+        if all_final_now:
+            break
+            
+    return {"solucion": x.tolist(), "pasos_iterativos": pasos}
+
+def metodo_gauss_seidel(A, b, x0, tol, max_iter):
+    A = np.array(A, dtype=float)
+    b = np.array(b, dtype=float)
+    x0 = np.array(x0, dtype=float)
+    n = len(b)
+    
+    for i in range(n):
+        if abs(A[i, i]) < 1e-12:
+            return {"error": f"Elemento en diagonal principal A[{i+1},{i+1}] es cero. El método no puede continuar."}
+            
+    pasos = []
+    x = x0.copy()
+    
+    for k in range(1, max_iter + 1):
+        x_new = x.copy()
+        errores = np.zeros_like(x)
+        
+        for i in range(n):
+            suma = 0
+            for j in range(n):
+                if i != j:
+                    suma += A[i, j] * x_new[j]
+            
+            val_old = x_new[i]
+            x_new[i] = (b[i] - suma) / A[i, i]
+            
+            if k == 1:
+                errores[i] = -1.0
+            else:
+                if x_new[i] != 0:
+                    errores[i] = abs((x_new[i] - val_old) / x_new[i]) * 100
+                else:
+                    errores[i] = 0.0
+                
+        decisiones = []
+        for i in range(n):
+            if k == 1:
+                decisiones.append("")
+            elif (errores[i] / 100.0) > tol:
+                decisiones.append("Continuar")
+            else:
+                decisiones.append("Finalizar")
+                
+        all_final_now = (k > 1) and all(d == "Finalizar" for d in decisiones)
+        
+        pasos.append({
+            "iteracion": k,
+            "x_old": x.tolist(),
+            "x_new": x_new.tolist(),
+            "errores": [None if e == -1.0 else e for e in errores.tolist()],
+            "decisiones": decisiones
+        })
+        
+        x = x_new.copy()
+        
+        if all_final_now:
+            break
+            
+    return {"solucion": x.tolist(), "pasos_iterativos": pasos}

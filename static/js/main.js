@@ -325,8 +325,8 @@ function renderTablaNL(resultados, metodo) {
     let rows = '';
 
     if (['Bisección', 'Regla Falsa'].includes(metodo)) {
-        headers = `<th>It</th><th>a</th><th>b</th><th>c</th><th>f(a)</th><th>f(b)</th><th>f(c)</th><th>f(a)*f(c)</th><th>Er%</th>`;
-        rows = resultados.map(r => `<tr><td>${r.iter}</td><td>${r.a}</td><td>${r.b}</td><td>${r.c}</td><td>${r.fa}</td><td>${r.fb}</td><td>${r.fc}</td><td>${r.prueba}</td><td>${r.error}</td></tr>`).join('');
+        headers = `<th>It</th><th>a</th><th>c</th><th>b</th><th>f(a)</th><th>f(c)</th><th>f(b)</th><th>f(a)*f(c)</th><th>Ea</th><th>Er%</th>`;
+        rows = resultados.map(r => `<tr><td>${r.iter}</td><td>${r.a}</td><td>${r.c}</td><td>${r.b}</td><td>${r.fa}</td><td>${r.fc}</td><td>${r.fb}</td><td>${r.prueba}</td><td>${r.ea}</td><td>${r.error}</td></tr>`).join('');
     } else if (metodo === 'Newton-Raphson') {
         headers = `<th>It</th><th>ci</th><th>f(ci)</th><th>f'(ci)</th><th>ci+1</th><th>Er%</th>`;
         rows = resultados.map(r => `<tr><td>${r.iter}</td><td>${r.ci}</td><td>${r.fci}</td><td>${r.dfci}</td><td>${r.cimas1}</td><td>${r.error}</td></tr>`).join('');

@@ -29,6 +29,7 @@ def punto_fijo(x0, tol, f, force=False, g_prima=None):
             'error': error_str
         })
         
+        # Condición de parada
         if error_rp < tol or x_actual == x_nuevo:
             raiz_encontrada = x_nuevo
             break
