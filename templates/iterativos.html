@@ -4,8 +4,13 @@
 <div class="page-container fade-in">
     <h2 class="page-title">Métodos Iterativos</h2>
     
-    <div class="glass-panel form-panel">
-        <div class="form-row align-center">
+    <div class="glass-panel form-panel" style="position: relative;">
+        <!-- Título de fondo dinámico -->
+        <div id="bg-method-name" style="position: absolute; left: 32px; top: 32px; font-family: 'Outfit', sans-serif; font-size: 4rem; font-weight: 800; color: rgba(245, 158, 11, 0.15); pointer-events: none; user-select: none; z-index: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%;">
+            Jacobi
+        </div>
+
+        <div class="form-row align-center" style="position: relative; z-index: 1;">
             <div class="input-group flex-1">
                 <label>Dimensión (n):</label>
                 <input type="number" id="n-iter" value="3" min="2" max="10" class="input-control text-center" onchange="generarMatrizIter()">
@@ -13,7 +18,7 @@
             
             <div class="input-group flex-1">
                 <label>Método:</label>
-                <select id="metodo-iterativo" class="input-control">
+                <select id="metodo-iterativo" class="input-control" onchange="actualizarNombreMetodo()">
                     <option value="Jacobi">Jacobi</option>
                     <option value="Gauss-Seidel">Gauss-Seidel</option>
                 </select>
@@ -30,6 +35,7 @@
 
             <div class="form-actions mt-4 flex-1 flex-row gap-2">
                 <button class="btn btn-primary" id="btn-calc-iter" onclick="calcularIterativo()">Resolver</button>
+                <button class="btn btn-warning" id="btn-ordenar-iter" onclick="verificarYOrdenarMatriz()">Verificar/Ordenar</button>
                 <button class="btn btn-danger" id="btn-limpiar-iter" onclick="limpiarIterativo()">Limpiar</button>
             </div>
         </div>
@@ -58,6 +64,18 @@
 
 {% block scripts %}
 <script>
+function actualizarNombreMetodo() {
+    const select = document.getElementById('metodo-iterativo');
+    if (select && typeof animateMethodNameChange === 'function') {
+        animateMethodNameChange('bg-method-name', select.value);
+    } else {
+        const bgText = document.getElementById('bg-method-name');
+        if (bgText) bgText.innerText = select.value;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', actualizarNombreMetodo);
+
 function generarMatrizIter() {
     const n = parseInt(document.getElementById('n-iter').value);
     const container = document.getElementById('matrix-container-iter');
@@ -72,6 +90,43 @@ function generarMatrizIter() {
         html += `<input type="text" id="bi-${i}" class="input-control text-center accent" placeholder="b_${i+1}">`;
     }
     container.innerHTML = html;
+}
+
+async function verificarYOrdenarMatriz() {
+    const n = parseInt(document.getElementById('n-iter').value);
+    const A = [], b = [];
+    for(let i=0; i<n; i++) {
+        const row = [];
+        for(let j=0; j<n; j++) {
+            row.push(parseFloat(document.getElementById(`ai-${i}-${j}`).value || 0));
+        }
+        A.push(row);
+        b.push(parseFloat(document.getElementById(`bi-${i}`).value || 0));
+    }
+    
+    const payload = { A, b };
+    const data = await performRequest('/api/ordenar_matriz', payload, 'btn-ordenar-iter');
+    
+    if (data.error) return showAlert('Error', data.error, 'error');
+    
+    if (data.resultado) {
+        if (!data.resultado.ordenado) {
+            showAlert('Matriz OK', data.resultado.msg, 'success');
+        } else {
+            // Actualizar la vista con la matriz ordenada
+            for(let i=0; i<n; i++) {
+                for(let j=0; j<n; j++) {
+                    document.getElementById(`ai-${i}-${j}`).value = data.resultado.A[i][j];
+                }
+                document.getElementById(`bi-${i}`).value = data.resultado.b[i];
+            }
+            if (data.resultado.dominante) {
+                showAlert('Matriz Ordenada', data.resultado.msg, 'success');
+            } else {
+                showAlert('Advertencia', data.resultado.msg, 'warning');
+            }
+        }
+    }
 }
 
 async function calcularIterativo() {
@@ -102,7 +157,7 @@ async function calcularIterativo() {
     document.getElementById('resultado-iter-container').style.display = 'block';
     const solDiv = document.getElementById('solucion-iter');
     let solHtml = data.resultado.solucion.map((val, i) => `
-        <div class="sol-chip">x<sub>${i+1}</sub> = ${val.toFixed(6)}</div>
+        <div class="sol-chip">x<sub>${i+1}</sub> = ${window.formatNumber(val)}</div>
     `).join('');
     solDiv.innerHTML = solHtml;
     
@@ -116,9 +171,9 @@ async function calcularIterativo() {
         
         let filas = "";
         data.resultado.pasos_iterativos.forEach(p => {
-            let tdIniciales = p.x_old.map(v => `<td>${v.toFixed(8)}</td>`).join('');
-            let tdNuevos = p.x_new.map(v => `<td>${v.toFixed(8)}</td>`).join('');
-            let tdErrores = p.errores.map(e => `<td>${e === null ? "" : e.toFixed(6) + "%"}</td>`).join('');
+            let tdIniciales = p.x_old.map(v => `<td>${window.formatNumber(v)}</td>`).join('');
+            let tdNuevos = p.x_new.map(v => `<td>${window.formatNumber(v)}</td>`).join('');
+            let tdErrores = p.errores.map(e => `<td>${e === null ? "" : window.formatNumber(e) + "%"}</td>`).join('');
             let tdDecisiones = p.decisiones.map(d => `<td>${d}</td>`).join('');
             
             filas += `

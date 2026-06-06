@@ -8,11 +8,16 @@
 <div class="page-container fade-in">
     <h2 class="page-title">Raíces Complejas (Polinomios)</h2>
     
-    <div class="glass-panel form-panel">
-        <div class="form-row align-center">
+    <div class="glass-panel form-panel" style="position: relative;">
+        <!-- Título de fondo dinámico -->
+        <div id="bg-method-name" style="position: absolute; left: 32px; top: 32px; font-family: 'Outfit', sans-serif; font-size: 4rem; font-weight: 800; color: rgba(245, 158, 11, 0.15); pointer-events: none; user-select: none; z-index: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%;">
+            Bairstow
+        </div>
+
+        <div class="form-row align-center" style="position: relative; z-index: 1; padding-top: 60px;">
             <div class="input-group flex-1">
                 <label>Método:</label>
-                <select id="metodo-pol" class="input-control" onchange="actualizarCamposPol()">
+                <select id="metodo-pol" class="input-control" onchange="actualizarCamposPol(); actualizarNombreMetodoPol();">
                     <option value="Bairstow">Bairstow</option>
                     <option value="Müller">Müller</option>
                     <option value="Horner-Newton">Horner-Newton</option>
@@ -72,4 +77,22 @@
         </button>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function actualizarNombreMetodoPol() {
+        const select = document.getElementById('metodo-pol');
+        if (select && typeof animateMethodNameChange === 'function') {
+            animateMethodNameChange('bg-method-name', select.value);
+        } else {
+            const bgText = document.getElementById('bg-method-name');
+            if (bgText && select) bgText.innerText = select.value;
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        actualizarNombreMetodoPol();
+    });
+</script>
 {% endblock %}

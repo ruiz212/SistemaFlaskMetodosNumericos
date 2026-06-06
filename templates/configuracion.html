@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row fade-in">
+    <div class="col-12">
+        <div class="glass-panel main-panel p-4">
+            <div class="page-header mb-4">
+                <h1 class="page-title"><i class="ph-fill ph-gear"></i> Configuración Global y por Módulo</h1>
+                <p class="text-muted">Ajusta el comportamiento de los métodos numéricos y la plataforma.</p>
+            </div>
+            
+            <div class="config-layout">
+                <!-- Pestañas/Secciones -->
+                <div class="config-sidebar">
+                    <button class="config-tab active" onclick="showConfigSection('global')"><i class="ph ph-globe"></i> Global</button>
+                    <button class="config-tab" onclick="showConfigSection('nl')"><i class="ph ph-chart-line-up"></i> Ecuaciones No Lineales</button>
+                    <button class="config-tab" onclick="showConfigSection('pol')"><i class="ph ph-function"></i> Polinomios</button>
+                    <button class="config-tab" onclick="showConfigSection('inter')"><i class="ph ph-graph"></i> Interpolación</button>
+                    <button class="config-tab" onclick="showConfigSection('sis')"><i class="ph ph-matrix-logo"></i> Sistemas Iterativos</button>
+                </div>
+
+                <!-- Contenido de las Secciones -->
+                <div class="config-content">
+                    
+                    <!-- GLOBAL -->
+                    <div id="cfg-global" class="config-section active">
+                        <h3>Configuración Global</h3>
+                        <div class="settings-group mb-4">
+                            <label>Precisión Decimal (Tablas y Resultados)</label>
+                            <div class="flex items-center gap-3 mt-2">
+                                <input type="range" id="setting-decimals" min="2" max="15" value="8" class="flex-1">
+                                <span id="setting-decimals-val" class="font-mono text-xl w-8 text-right">8</span>
+                            </div>
+                            <small class="text-muted">Afecta visualmente a todas las iteraciones en la plataforma.</small>
+                        </div>
+                        
+                        <div class="settings-group mb-4">
+                            <label>Modo Angular (Trigonometría)</label>
+                            <div class="segmented-control mt-2">
+                                <button class="seg-btn" id="btn-ang-rad" onclick="setAngleMode('rad')">Radianes (Rad)</button>
+                                <button class="seg-btn" id="btn-ang-deg" onclick="setAngleMode('deg')">Grados (Deg)</button>
+                            </div>
+                            <small class="text-muted">Afecta la evaluación de sin(x), cos(x), tan(x) en Python.</small>
+                        </div>
+                    </div>
+
+                    <!-- NO LINEALES -->
+                    <div id="cfg-nl" class="config-section" style="display: none;">
+                        <h3>Ecuaciones No Lineales</h3>
+                        <div class="settings-group mb-4">
+                            <label>Criterio de Parada Predeterminado</label>
+                            <select id="cfg-nl-error-mode" class="input-control mt-2">
+                                <option value="relativo">Error Relativo Porcentual (Recomendado)</option>
+                                <option value="absoluto">Error Absoluto</option>
+                            </select>
+                            <small class="text-muted">Determina qué error se evalúa contra la Tolerancia.</small>
+                        </div>
+
+                        <div class="settings-group mb-4">
+                            <label>Límite de Iteraciones (Safeguard)</label>
+                            <input type="number" id="cfg-nl-iter-max" class="input-control mt-2" min="10" max="5000" step="10">
+                            <small class="text-muted">Iteraciones máximas antes de abortar para prevenir bucles infinitos.</small>
+                        </div>
+                    </div>
+
+                    <!-- POLINOMIOS -->
+                    <div id="cfg-pol" class="config-section" style="display: none;">
+                        <h3>Polinomios</h3>
+                        <div class="settings-group mb-4">
+                            <label>Filtro de Ruido Imaginario</label>
+                            <input type="text" id="cfg-pol-imag-tol" class="input-control mt-2" placeholder="Ej: 1e-10">
+                            <small class="text-muted">Ignora partes imaginarias menores a este umbral (ej. 2 + 1e-18j se mostrará como 2).</small>
+                        </div>
+                    </div>
+
+                    <!-- INTERPOLACIÓN -->
+                    <div id="cfg-inter" class="config-section" style="display: none;">
+                        <h3>Interpolación</h3>
+                        <div class="settings-group mb-4 flex justify-between items-center">
+                            <div>
+                                <label>Auto-Graficar</label>
+                                <small class="text-muted block">Generar la gráfica de Python automáticamente al calcular.</small>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="cfg-inter-auto-graph">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+
+                        <div class="settings-group mb-4 flex justify-between items-center">
+                            <div>
+                                <label>Alerta de Extrapolación</label>
+                                <small class="text-muted block">Advertir si se interpola fuera del rango de X dado.</small>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="cfg-inter-warn-extrap">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- SISTEMAS ITERATIVOS -->
+                    <div id="cfg-sis" class="config-section" style="display: none;">
+                        <h3>Sistemas Iterativos</h3>
+                        <div class="settings-group mb-4 flex justify-between items-center">
+                            <div>
+                                <label>Criterio de Diagonal Estricta</label>
+                                <small class="text-muted block">Forzar convergencia requiriendo matriz diagonalmente dominante.</small>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="cfg-sis-strict-diag">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="flex justify-end mt-4 pt-4" style="border-top: 1px solid var(--border-color);">
+                <button class="btn btn-primary" onclick="window.saveAllSettings()"><i class="ph ph-floppy-disk"></i> Guardar Cambios</button>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<style>
+.config-layout {
+    display: flex;
+    gap: 24px;
+    margin-top: 20px;
+}
+.config-sidebar {
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-right: 1px solid var(--border-color);
+    padding-right: 16px;
+}
+.config-tab {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    text-align: left;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+.config-tab:hover {
+    background: var(--surface-2);
+    color: var(--text-primary);
+}
+.config-tab.active {
+    background: var(--vp-violet-l);
+    color: white;
+}
+.config-content {
+    flex: 1;
+}
+.config-section h3 {
+    margin-top: 0;
+    margin-bottom: 24px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+}
+.flex { display: flex; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+.items-center { align-items: center; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.mt-2 { margin-top: 8px; }
+.mt-4 { margin-top: 16px; }
+.pt-4 { padding-top: 16px; }
+.mb-4 { margin-bottom: 16px; }
+.flex-1 { flex: 1; }
+.block { display: block; }
+.w-8 { width: 32px; }
+
+/* Segmented Control Premium */
+.segmented-control {
+    display: flex;
+    background: var(--bg-input);
+    border-radius: var(--radius-md);
+    padding: 6px;
+    border: 1px solid var(--border-light);
+    gap: 4px;
+}
+.seg-btn {
+    flex: 1;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-shadow: none;
+}
+.seg-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+.seg-btn.active {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+/* Range Slider Premium */
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+input[type=range]:focus {
+    outline: none;
+}
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: var(--bg-input);
+    border-radius: 4px;
+    border: 1px solid var(--border-light);
+}
+input[type=range]::-webkit-slider-thumb {
+    height: 24px;
+    width: 24px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin-top: -9px;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    background: white;
+}
+
+/* Switch Toggle Premium CSS */
+.switch { position: relative; display: inline-block; width: 56px; height: 30px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-input); transition: .4s; border: 1px solid var(--border-light); }
+.slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px; background-color: var(--text-secondary); transition: .4s cubic-bezier(0.68, -0.55, 0.265, 1.55); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+input:checked + .slider { background: var(--gradient-primary); border-color: transparent; }
+input:focus + .slider { box-shadow: 0 0 1px var(--accent-primary); }
+input:checked + .slider:before { transform: translateX(26px); background-color: white; }
+.slider.round { border-radius: 34px; }
+.slider.round:before { border-radius: 50%; }
+
+@media (max-width: 768px) {
+    .config-layout { flex-direction: column; }
+    .config-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); padding-right: 0; padding-bottom: 16px; flex-direction: row; overflow-x: auto; }
+    .config-tab { white-space: nowrap; }
+}
+</style>
+
+<script>
+function showConfigSection(id) {
+    document.querySelectorAll('.config-section').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.config-tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('cfg-' + id).style.display = 'block';
+    event.currentTarget.classList.add('active');
+}
+</script>
+{% endblock %}

@@ -8,8 +8,13 @@
 <div class="page-container fade-in">
     <h2 class="page-title">Sistemas No Lineales (Newton-Raphson Multivariable)</h2>
     
-    <div class="glass-panel form-panel">
-        <div class="form-row align-center">
+    <div class="glass-panel form-panel" style="position: relative;">
+        <!-- Título de fondo fijo -->
+        <div id="bg-method-name" style="position: absolute; left: 32px; top: 32px; font-family: 'Outfit', sans-serif; font-size: 4rem; font-weight: 800; color: rgba(245, 158, 11, 0.15); pointer-events: none; user-select: none; z-index: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%;">
+            Newton-Raphson
+        </div>
+
+        <div class="form-row align-center" style="position: relative; z-index: 1; padding-top: 60px;">
             <div class="input-group flex-1">
                 <label>Variables (n):</label>
                 <input type="number" id="n-sis" value="2" min="2" max="10" class="input-control text-center" onchange="generarCamposSistemas()">
@@ -91,4 +96,14 @@
         <div id="plotly-3d" style="width:100%; height:520px;"></div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof animateMethodNameChange === 'function') {
+        animateMethodNameChange('bg-method-name', 'Newton-Raphson');
+    }
+});
+</script>
 {% endblock %}

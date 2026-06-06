@@ -1,4 +1,7 @@
-def newton_raphson(ci, tol, f, df):
+def newton_raphson(ci, tol, f, df, cfg=None):
+    if cfg is None: cfg = {}
+    iter_max = int(cfg.get('nl_iter_max', 500))
+    error_mode = cfg.get('nl_error_mode', 'relativo')
     resultados = []
     iteracion = 1          # Convención: empieza en iteración 1
     ci_anterior = None     # Para detectar primera iteración
@@ -20,32 +23,35 @@ def newton_raphson(ci, tol, f, df):
         
         ci_mas_1 = ci - (f_ci / df_ci)   # Fórmula de Newton-Raphson
 
-        # Error relativo porcentual
-        if ci_mas_1 != 0:
-            error_rp  = abs((ci_mas_1 - ci) / ci_mas_1) * 100.0
-            error_str = f"{error_rp:.6f}%"
+        # Error evaluation
+        if error_mode == 'absoluto':
+            err_val = abs(ci_mas_1 - ci)
+            error_str = f"{err_val:.15f}"
         else:
-            error_rp  = 0.0
-            error_str = "0.000000%"
+            if ci_mas_1 != 0:
+                err_val = abs((ci_mas_1 - ci) / ci_mas_1) * 100.0
+                error_str = f"{err_val:.15f}%"
+            else:
+                err_val = 0.0
+                error_str = "0.000000%"
         
         resultados.append({
             'iter': iteracion,
-            'ci':    f"{ci:.6f}",
-            'fci':   f"{f_ci:.6f}",
-            'dfci':  f"{df_ci:.6f}",
-            'cimas1': f"{ci_mas_1:.6f}",
+            'ci':    f"{ci:.15f}",
+            'fci':   f"{f_ci:.15f}",
+            'dfci':  f"{df_ci:.15f}",
+            'cimas1': f"{ci_mas_1:.15f}",
             'error': error_str
         })
         
-        # Condición de parada
-        if error_rp < tol or f_ci == 0:
+        if err_val < tol or f_ci == 0:
             raiz_encontrada = ci_mas_1
             break
 
         ci_anterior = ci
         ci = ci_mas_1
         iteracion += 1
-        if iteracion > 101:
-            return {"error": "Error: El método no convergió en 100 iteraciones (posible divergencia)."}
+        if iteracion > iter_max:
+            return {"error": f"Error: El método no convergió en {iter_max} iteraciones (posible divergencia)."}
 
     return {"resultados": resultados, "raiz": raiz_encontrada, "mensaje": f"Newton-Raphson | Raíz: {raiz_encontrada:.8f}"}

@@ -17,7 +17,7 @@ def eliminacion_gaussiana(A, b):
         for j in range(i + 1, n):
             factor = Ab[j, i] / Ab[i, i]
             Ab[j, i:] -= factor * Ab[i, i:]
-            pasos.append({"msg": f"Eliminación: R{j+1} = R{j+1} - ({factor:.4f}) * R{i+1}", "matrix": Ab.copy().tolist()})
+            pasos.append({"msg": f"Eliminación: R{j+1} = R{j+1} - ({factor:.15f}) * R{i+1}", "matrix": Ab.copy().tolist()})
             
     # Sustitución hacia atrás
     x = np.zeros(n)
@@ -78,14 +78,14 @@ def gauss_jordan(A, b):
         # Normalizar fila pivote
         pivot = Ab[i, i]
         Ab[i, :] /= pivot
-        pasos.append({"msg": f"Normalizar R{i+1}: R{i+1} / {pivot:.4f}", "matrix": Ab.copy().tolist()})
+        pasos.append({"msg": f"Normalizar R{i+1}: R{i+1} / {pivot:.15f}", "matrix": Ab.copy().tolist()})
         
         # Eliminar otras filas
         for j in range(n):
             if i != j:
                 factor = Ab[j, i]
                 Ab[j, :] -= factor * Ab[i, :]
-                pasos.append({"msg": f"Eliminación: R{j+1} = R{j+1} - ({factor:.4f}) * R{i+1}", "matrix": Ab.copy().tolist()})
+                pasos.append({"msg": f"Eliminación: R{j+1} = R{j+1} - ({factor:.15f}) * R{i+1}", "matrix": Ab.copy().tolist()})
                 
     return {"solucion": Ab[:, n].tolist(), "pasos": pasos}
 
@@ -108,14 +108,14 @@ def matriz_inversa(A, b):
         # Normalizar
         pivot = AI[i, i]
         AI[i, :] /= pivot
-        pasos.append({"msg": f"Hacer 1 el pivote: R{i+1} = R{i+1} / {pivot:.4f}", "matrix": AI.copy().tolist()})
+        pasos.append({"msg": f"Hacer 1 el pivote: R{i+1} = R{i+1} / {pivot:.15f}", "matrix": AI.copy().tolist()})
         
         # Reducir otras filas
         for j in range(n):
             if i != j:
                 factor = AI[j, i]
                 AI[j, :] -= factor * AI[i, :]
-                pasos.append({"msg": f"Transformación: R{j+1} = R{j+1} - ({factor:.4f}) * R{i+1}", "matrix": AI.copy().tolist()})
+                pasos.append({"msg": f"Transformación: R{j+1} = R{j+1} - ({factor:.15f}) * R{i+1}", "matrix": AI.copy().tolist()})
                 
     inversa = AI[:, n:]
     x = np.dot(inversa, b)
@@ -127,15 +127,23 @@ def matriz_inversa(A, b):
         "msg_final": "Se obtuvo la inversa mediante Gauss-Jordan sobre [A|I] y luego se multiplicó X = A⁻¹ * b"
     }
 
-def metodo_jacobi(A, b, x0, tol, max_iter):
+def metodo_jacobi(A, b, x0, tol, max_iter, cfg=None):
+    if cfg is None: cfg = {}
     A = np.array(A, dtype=float)
     b = np.array(b, dtype=float)
     x0 = np.array(x0, dtype=float)
     n = len(b)
     
+    strict_diag = cfg.get('sis_strict_diag', True)
+    
     for i in range(n):
-        if abs(A[i, i]) < 1e-12:
+        diag = abs(A[i, i])
+        if diag < 1e-12:
             return {"error": f"Elemento en diagonal principal A[{i+1},{i+1}] es cero. El método no puede continuar."}
+        if strict_diag:
+            suma = sum(abs(A[i, j]) for j in range(n) if i != j)
+            if diag <= suma:
+                return {"error": f"La matriz no es estrictamente diagonal dominante en la fila {i+1}. Desactiva el Criterio de Diagonal Estricta en Configuración Global para forzar el cálculo."}
             
     pasos = []
     x = x0.copy()
@@ -163,7 +171,7 @@ def metodo_jacobi(A, b, x0, tol, max_iter):
         for i in range(n):
             if k == 1:
                 decisiones.append("")
-            elif (errores[i] / 100.0) > tol:
+            elif errores[i] > tol:
                 decisiones.append("Continuar")
             else:
                 decisiones.append("Finalizar")
@@ -185,15 +193,23 @@ def metodo_jacobi(A, b, x0, tol, max_iter):
             
     return {"solucion": x.tolist(), "pasos_iterativos": pasos}
 
-def metodo_gauss_seidel(A, b, x0, tol, max_iter):
+def metodo_gauss_seidel(A, b, x0, tol, max_iter, cfg=None):
+    if cfg is None: cfg = {}
     A = np.array(A, dtype=float)
     b = np.array(b, dtype=float)
     x0 = np.array(x0, dtype=float)
     n = len(b)
     
+    strict_diag = cfg.get('sis_strict_diag', True)
+    
     for i in range(n):
-        if abs(A[i, i]) < 1e-12:
+        diag = abs(A[i, i])
+        if diag < 1e-12:
             return {"error": f"Elemento en diagonal principal A[{i+1},{i+1}] es cero. El método no puede continuar."}
+        if strict_diag:
+            suma = sum(abs(A[i, j]) for j in range(n) if i != j)
+            if diag <= suma:
+                return {"error": f"La matriz no es estrictamente diagonal dominante en la fila {i+1}. Desactiva el Criterio de Diagonal Estricta en Configuración Global para forzar el cálculo."}
             
     pasos = []
     x = x0.copy()
@@ -223,7 +239,7 @@ def metodo_gauss_seidel(A, b, x0, tol, max_iter):
         for i in range(n):
             if k == 1:
                 decisiones.append("")
-            elif (errores[i] / 100.0) > tol:
+            elif errores[i] > tol:
                 decisiones.append("Continuar")
             else:
                 decisiones.append("Finalizar")
@@ -244,3 +260,74 @@ def metodo_gauss_seidel(A, b, x0, tol, max_iter):
             break
             
     return {"solucion": x.tolist(), "pasos_iterativos": pasos}
+
+def ordenar_matriz_dominante(A, b):
+    A = np.array(A, dtype=float)
+    b = np.array(b, dtype=float)
+    n = len(b)
+    
+    is_dominant = True
+    has_zeros = False
+    for i in range(n):
+        diag = abs(A[i, i])
+        if diag < 1e-12:
+            has_zeros = True
+        suma = sum(abs(A[i, j]) for j in range(n) if i != j)
+        if diag <= suma:
+            is_dominant = False
+            
+    if is_dominant and not has_zeros:
+        return {
+            "ordenado": False,
+            "dominante": True,
+            "A": A.tolist(),
+            "b": b.tolist(),
+            "msg": "La matriz ya es estrictamente diagonal dominante."
+        }
+        
+    try:
+        from scipy.optimize import linear_sum_assignment
+        cost_matrix = np.zeros((n, n))
+        for i in range(n):
+            suma_total = sum(abs(A[i, k]) for k in range(n))
+            for j in range(n):
+                score = abs(A[i, j]) - (suma_total - abs(A[i, j]))
+                cost_matrix[i, j] = -score
+                
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
+        
+        nueva_A = np.zeros_like(A)
+        nuevo_b = np.zeros_like(b)
+        
+        for i in range(n):
+            destino_row = col_ind[i]
+            nueva_A[destino_row] = A[i]
+            nuevo_b[destino_row] = b[i]
+            
+        is_dominant_now = True
+        has_zeros_now = False
+        for i in range(n):
+            diag = abs(nueva_A[i, i])
+            if diag < 1e-12:
+                has_zeros_now = True
+            suma = sum(abs(nueva_A[i, j]) for j in range(n) if i != j)
+            if diag <= suma:
+                is_dominant_now = False
+                
+        if is_dominant_now:
+            msg = "Matriz reordenada exitosamente para ser estrictamente diagonal dominante."
+        else:
+            if has_zeros_now:
+                msg = "No se pudo evitar elementos cercanos a cero en la diagonal principal. El método iterativo podría fallar."
+            else:
+                msg = "Matriz reordenada para maximizar la diagonal, pero no es estrictamente diagonal dominante. Podría no converger."
+                
+        return {
+            "ordenado": True,
+            "dominante": is_dominant_now,
+            "A": nueva_A.tolist(),
+            "b": nuevo_b.tolist(),
+            "msg": msg
+        }
+    except Exception as e:
+        return {"error": f"Error al intentar ordenar la matriz: {str(e)}"}

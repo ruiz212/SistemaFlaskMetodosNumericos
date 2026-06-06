@@ -432,7 +432,7 @@
    ANIMACIONES ON-SCROLL — Sincronizadas con Anime.js 
    (Simulando la nueva función onScroll de Anime v4)
    ============================================================ */
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
     const elements = document.querySelectorAll('.reveal-up');
     const scrollAnimations = [];
 
@@ -489,6 +489,6 @@
 
     // Ejecutar una vez al cargar para los elementos que ya están en pantalla
     onScroll();
-})();
+});
 </script>
 {% endblock %}

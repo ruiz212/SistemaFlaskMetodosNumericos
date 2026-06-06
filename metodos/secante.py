@@ -1,4 +1,7 @@
-def secante(x0, x1, tol, f):
+def secante(x0, x1, tol, f, cfg=None):
+    if cfg is None: cfg = {}
+    iter_max = int(cfg.get('nl_iter_max', 500))
+    error_mode = cfg.get('nl_error_mode', 'relativo')
     resultados = []
     raiz_encontrada = None
 
@@ -16,14 +19,14 @@ def secante(x0, x1, tol, f):
     # Registrar puntos iniciales en el historial (Iter 0 e Iter 1)
     resultados.append({
         'iter': 0,
-        'ci':   f"{x0:.7f}",
-        'fci':  f"{f0:.7f}",
+        'ci':   f"{x0:.15f}",
+        'fci':  f"{f0:.15f}",
         'error': "---"
     })
     resultados.append({
         'iter': 1,
-        'ci':   f"{x1:.7f}",
-        'fci':  f"{f1:.7f}",
+        'ci':   f"{x1:.15f}",
+        'fci':  f"{f1:.15f}",
         'error': "---"
     })
 
@@ -44,27 +47,31 @@ def secante(x0, x1, tol, f):
         f_nuevo = f(c_nuevo)
         
         if f_nuevo is None:
-            return {"error": f"Error evaluando f({c_nuevo:.6f})."}
+            return {"error": f"Error evaluando f({c_nuevo:.15f})."}
         
         f_nuevo = f_nuevo.real if isinstance(f_nuevo, complex) else f_nuevo
 
-        # Error relativo porcentual
-        if c_nuevo != 0:
-            error_rp  = abs((c_nuevo - c_actual) / c_nuevo) * 100.0
-            error_str = f"{error_rp:.6f}%"
+        # Error evaluation
+        if error_mode == 'absoluto':
+            err_val = abs(c_nuevo - c_actual)
+            error_str = f"{err_val:.15f}"
         else:
-            error_rp  = 0.0
-            error_str = "0.000000%"
+            if c_nuevo != 0:
+                err_val = abs((c_nuevo - c_actual) / c_nuevo) * 100.0
+                error_str = f"{err_val:.15f}%"
+            else:
+                err_val = 0.0
+                error_str = "0.000000%"
         
         resultados.append({
             'iter': iteracion,
-            'ci':   f"{c_nuevo:.7f}",
-            'fci':  f"{f_nuevo:.7f}",
+            'ci':   f"{c_nuevo:.15f}",
+            'fci':  f"{f_nuevo:.15f}",
             'error': error_str
         })
         
         # Condición de parada
-        if error_rp < tol or f_nuevo == 0:
+        if err_val < tol or f_nuevo == 0:
             raiz_encontrada = c_nuevo
             break
 
@@ -73,7 +80,7 @@ def secante(x0, x1, tol, f):
         c_actual, f_actual = c_nuevo,  f_nuevo
         iteracion += 1
         
-        if iteracion > 102: # Límite razonable de iteraciones
-            return {"error": "Error: El método no convergió en 100 iteraciones."}
+        if iteracion > iter_max + 1:
+            return {"error": f"Error: El método no convergió en {iter_max} iteraciones."}
 
     return {"resultados": resultados, "raiz": raiz_encontrada, "mensaje": f"Secante | Raíz: {raiz_encontrada:.8f}"}

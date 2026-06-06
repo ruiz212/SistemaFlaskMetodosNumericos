@@ -21,25 +21,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
-    <!-- Iconos Phosphor -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <!-- Anime JS global para transiciones -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <!-- Iconos Phosphor (CSS) -->
+    <script src="https://unpkg.com/@phosphor-icons/web" defer></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
-    <!-- Driver.js para tutoriales interactivos -->
+    
+    <!-- driver.css (Render-blocking es aceptable para CSS crítico, pero dejémoslo) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
-    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
     
-    <!-- KaTeX para previsualización real-time -->
+    <!-- katex css -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-    
-    <!-- jsPDF y html2canvas para reportes -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
-    <!-- Plotly para gráficas 3D -->
-    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
 
     {% block styles %}{% endblock %}
     
@@ -58,50 +48,55 @@
     </script>
 </head>
 <body>
-    <!-- Top Navigation Bar -->
     <header class="topbar">
         <div class="topbar-content">
-            <div class="brand">
+            <a href="{{ url_for('index') }}" class="brand">
                 <div class="brand-logo">
                     <i class="ph-bold ph-sigma"></i>
                 </div>
                 <span class="brand-text">Suite Numérica</span>
-            </div>
+            </a>
             
             <nav class="nav-menu">
                 <a href="{{ url_for('index') }}" class="nav-item page-link {% if request.path == '/' %}active{% endif %}">
-                    <i class="ph ph-house"></i> Inicio
+                    <i class="ph ph-house"></i> <span>Inicio</span>
                 </a>
                 <a href="{{ url_for('no_lineales') }}" class="nav-item page-link {% if request.path == '/no-lineales' %}active{% endif %}">
-                    <i class="ph ph-chart-line-up"></i> Ecuaciones
+                    <i class="ph ph-chart-line-up"></i> <span>Ecuaciones</span>
                 </a>
                 <a href="{{ url_for('polinomios') }}" class="nav-item page-link {% if request.path == '/polinomios' %}active{% endif %}">
-                    <i class="ph ph-function"></i> Polinomios
+                    <i class="ph ph-function"></i> <span>Polinomios</span>
                 </a>
                 <a href="{{ url_for('sistemas') }}" class="nav-item page-link {% if request.path == '/sistemas' %}active{% endif %}">
-                    <i class="ph ph-intersect"></i> Sistemas NL
+                    <i class="ph ph-intersect"></i> <span>Sistemas NL</span>
                 </a>
                 <a href="{{ url_for('sistemas_lineales') }}" class="nav-item page-link {% if request.path == '/sistemas-lineales' %}active{% endif %}">
-                    <i class="ph ph-matrix"></i> Sistemas Lin
+                    <i class="ph ph-matrix"></i> <span>Sistemas Lin</span>
                 </a>
                 <a href="{{ url_for('iterativos') }}" class="nav-item page-link {% if request.path == '/iterativos' %}active{% endif %}">
-                    <i class="ph ph-arrows-clockwise"></i> Iterativos
+                    <i class="ph ph-arrows-clockwise"></i> <span>Iterativos</span>
                 </a>
                 <a href="{{ url_for('interpolacion') }}" class="nav-item page-link {% if request.path == '/interpolacion' %}active{% endif %}">
-                    <i class="ph ph-trend-up"></i> Interpolación
+                    <i class="ph ph-trend-up"></i> <span>Interpolación</span>
                 </a>
-                
-                <div class="theme-toggle" id="theme-btn" style="cursor: pointer; margin-left: 16px; font-size: 20px; color: var(--text-primary); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; transition: background 0.3s;" title="Cambiar Tema">
+            </nav>
+
+            <div class="topbar-actions">
+                <div class="theme-toggle action-btn" id="theme-btn" title="Cambiar Tema">
                     <i class="ph-fill ph-moon" id="theme-icon"></i>
                 </div>
                 
-                <div class="tutorial-toggle" id="tutorial-btn" style="cursor: pointer; margin-left: 8px; font-size: 20px; color: var(--text-primary); display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; transition: background 0.3s;" title="Iniciar Tutorial">
+                <div class="tutorial-toggle action-btn" id="tutorial-btn" title="Iniciar Tutorial">
                     <i class="ph ph-question"></i>
                 </div>
-            </nav>
+                
+                <a href="{{ url_for('configuracion') }}" class="settings-toggle action-btn" id="settings-btn" title="Configuración Global">
+                    <i class="ph ph-gear"></i>
+                </a>
 
-            <div class="mobile-menu-btn" id="mobile-btn">
-                <i class="ph ph-list"></i>
+                <div class="mobile-menu-btn action-btn" id="mobile-btn">
+                    <i class="ph ph-list"></i>
+                </div>
             </div>
         </div>
     </header>
@@ -114,12 +109,22 @@
     <!-- Contenedor dinámico para la animación de "Limpiar" (Papelera) -->
     <div id="trash-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999; overflow: hidden;"></div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
-    <script src="{{ url_for('static', filename='js/animations.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tutorial.js') }}"></script>
+    <!-- Heavy Libraries (Deferred to prevent render-blocking) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js" defer></script>
+
+    <!-- App Scripts -->
+    <script src="{{ url_for('static', filename='js/animations.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/text_animator.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/settings.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/tutorial.js') }}" defer></script>
     
     <script>
         // Mobile menu toggle

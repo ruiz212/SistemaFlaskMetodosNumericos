@@ -8,7 +8,7 @@ class NewtonDividedDifferences:
     Incluye cálculo automático del grado óptimo basado en tolerancia, construcción
     simbólica de la ecuación y módulo de pronóstico.
     """
-    def __init__(self, x_data, y_data, tolerancia=0.001):
+    def __init__(self, x_data, y_data, tolerancia=0.001, cfg=None):
         """
         Inicializa el interpolador de Newton.
         
@@ -27,6 +27,11 @@ class NewtonDividedDifferences:
         self.grado_optimo = 0
         self.ecuacion_simbolica = None
         self.ecuacion_simplificada = None
+        
+        self.cfg = cfg if cfg is not None else {}
+        self.auto_graph = self.cfg.get('inter_auto_graph', False)
+        self.warn_extrap = self.cfg.get('inter_warn_extrap', True)
+        self.warnings = []
         
         # Variable simbólica
         self.x_sym = sp.Symbol('x')
@@ -62,6 +67,9 @@ class NewtonDividedDifferences:
         Itera sobre los posibles grados del polinomio (1 a n-1) evaluando el error.
         Se detiene cuando el error <= tolerancia o la diferencia es 0.
         """
+        self.errores_pasos = []
+        self.razon_detencion = ""
+        
         for k in range(1, self.n):
             # Calcular tabla temporal hasta grado k
             tabla_temp = self._calcular_tabla_diferencias(k)
@@ -74,10 +82,19 @@ class NewtonDividedDifferences:
                 errores.append(abs(y_calc - self.y_data[i]))
             
             error_maximo = max(errores)
+            self.errores_pasos.append(error_maximo)
             
             # Chequear la siguiente diferencia dividida si es exactamente 0
             # Si el error es menor o igual a la tolerancia, nos detenemos.
-            if error_maximo <= self.tolerancia or (abs(coefs_temp[-1]) < 1e-15 and k > 1):
+            if error_maximo <= self.tolerancia:
+                self.razon_detencion = f"Se alcanzó la tolerancia esperada (Error: {error_maximo:.6e} ≤ {self.tolerancia})"
+                self.grado_optimo = k
+                self.tabla = tabla_temp
+                self.coeficientes = coefs_temp
+                self._construir_ecuacion()
+                return
+            elif abs(coefs_temp[-1]) < 1e-15 and k > 1:
+                self.razon_detencion = f"Las diferencias divididas se hicieron cero (Convergencia exacta, Error: {error_maximo:.6e})"
                 self.grado_optimo = k
                 self.tabla = tabla_temp
                 self.coeficientes = coefs_temp
@@ -85,6 +102,7 @@ class NewtonDividedDifferences:
                 return
                 
         # Si no se detuvo por tolerancia, usamos el grado máximo n-1
+        self.razon_detencion = f"Se alcanzó el grado máximo posible con {self.n} puntos (Grado {self.n - 1}). Error final: {self.errores_pasos[-1]:.6e}"
         self.grado_optimo = self.n - 1
         self.tabla = self._calcular_tabla_diferencias(self.grado_optimo)
         self.coeficientes = self.tabla[0, :]
@@ -92,22 +110,33 @@ class NewtonDividedDifferences:
 
     def _construir_ecuacion(self):
         """
-        Construye la ecuación simbólica con sympy usando el grado óptimo.
+        Construye la ecuación simbólica con sympy usando el grado óptimo,
+        y también guarda todos los polinomios intermedios.
         """
+        self.polinomios_pasos = []
         P = self.coeficientes[0]
+        self.polinomios_pasos.append(sp.simplify(P))
+        
         producto = 1
         for i in range(1, self.grado_optimo + 1):
             producto *= (self.x_sym - self.x_data[i - 1])
             P += self.coeficientes[i] * producto
+            self.polinomios_pasos.append(sp.simplify(P))
             
         self.ecuacion_simbolica = P
-        self.ecuacion_simplificada = sp.simplify(P)
+        self.ecuacion_simplificada = self.polinomios_pasos[-1]
         
     def obtener_ecuacion_string(self):
         """Retorna la ecuación simplificada como string."""
         if self.ecuacion_simplificada is None:
             return "Polinomio no calculado."
         return str(self.ecuacion_simplificada)
+        
+    def obtener_polinomios_pasos(self):
+        """Retorna una lista con las ecuaciones en cada grado."""
+        if not hasattr(self, 'polinomios_pasos'):
+            return []
+        return [str(p) for p in self.polinomios_pasos]
 
     def pronosticar(self, x_nuevos):
         """
@@ -123,6 +152,13 @@ class NewtonDividedDifferences:
             x_nuevos = [x_nuevos]
             
         x_nuevos = np.array(x_nuevos, dtype=float)
+        
+        if self.warn_extrap:
+            min_x, max_x = np.min(self.x_data), np.max(self.x_data)
+            out_of_bounds = [x for x in x_nuevos if x < min_x or x > max_x]
+            if out_of_bounds:
+                self.warnings.append(f"Advertencia: Extrapolando para valores {out_of_bounds} fuera del rango [{min_x}, {max_x}]")
+                
         y_pronosticos = np.array([self._evaluar_polinomio(x, self.coeficientes, self.x_data) for x in x_nuevos])
         
         return y_pronosticos if len(y_pronosticos) > 1 else y_pronosticos[0]

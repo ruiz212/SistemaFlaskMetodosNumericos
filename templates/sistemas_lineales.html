@@ -4,8 +4,13 @@
 <div class="page-container fade-in">
     <h2 class="page-title">Sistemas de Ecuaciones Lineales</h2>
     
-    <div class="glass-panel form-panel">
-        <div class="form-row align-center">
+    <div class="glass-panel form-panel" style="position: relative;">
+        <!-- Título de fondo dinámico -->
+        <div id="bg-method-name" style="position: absolute; left: 32px; top: 32px; font-family: 'Outfit', sans-serif; font-size: 4rem; font-weight: 800; color: rgba(245, 158, 11, 0.15); pointer-events: none; user-select: none; z-index: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%;">
+            Eliminación Gaussiana
+        </div>
+
+        <div class="form-row align-center" style="position: relative; z-index: 1; padding-top: 60px;">
             <div class="input-group flex-1">
                 <label>Dimensión (n):</label>
                 <input type="number" id="n-lin" value="3" min="2" max="10" class="input-control text-center" onchange="generarMatriz()">
@@ -13,7 +18,7 @@
             
             <div id="opciones-directos" class="input-group flex-2">
                 <label>Método:</label>
-                <select id="metodo-directo" class="input-control">
+                <select id="metodo-directo" class="input-control" onchange="actualizarNombreMetodoLin()">
                     <option value="Eliminación Gaussiana">Eliminación Gaussiana</option>
                     <option value="Factorización LU">Factorización LU</option>
                     <option value="Gauss-Jordan">Gauss-Jordan</option>
@@ -52,6 +57,20 @@
 
 {% block scripts %}
 <script>
+function actualizarNombreMetodoLin() {
+    const select = document.getElementById('metodo-directo');
+    if (select && typeof animateMethodNameChange === 'function') {
+        animateMethodNameChange('bg-method-name', select.value);
+    } else {
+        const bgText = document.getElementById('bg-method-name');
+        if (bgText && select) bgText.innerText = select.value;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    actualizarNombreMetodoLin();
+});
+
 function generarMatriz() {
     const n = parseInt(document.getElementById('n-lin').value);
     const container = document.getElementById('matrix-container');
@@ -92,11 +111,11 @@ async function calcularLin() {
     document.getElementById('resultado-lin-container').style.display = 'block';
     const solDiv = document.getElementById('solucion-lin');
     let solHtml = data.resultado.solucion.map((val, i) => `
-        <div class="sol-chip">x<sub>${i+1}</sub> = ${val.toFixed(6)}</div>
+        <div class="sol-chip">x<sub>${i+1}</sub> = ${window.formatNumber(val)}</div>
     `).join('');
     
     if (data.resultado.det_principal !== undefined) {
-        solHtml = `<div class="mb-3"><strong>Det(A) = ${data.resultado.det_principal.toFixed(4)}</strong></div>` + solHtml;
+        solHtml = `<div class="mb-3"><strong>Det(A) = ${window.formatNumber(data.resultado.det_principal)}</strong></div>` + solHtml;
     }
     
     if (data.resultado.msg_final) {
@@ -111,25 +130,25 @@ async function calcularLin() {
         pasosHtml = data.resultado.pasos.map(p => `
             <div class="step-card">
                 <div class="step-msg">${p.msg}</div>
-                <pre class="step-matrix">${p.matrix.map(r => r.map(v => v.toFixed(2).padStart(8)).join(' ')).join('\n')}</pre>
+                <pre class="step-matrix">${p.matrix.map(r => r.map(v => window.formatNumber(v).padStart(12)).join(' ')).join('\n')}</pre>
             </div>
         `).join('');
     } else if (data.resultado.L) {
         pasosHtml = `
             <div class="step-card">
                 <div class="step-msg">Matriz L (Lower)</div>
-                <pre class="step-matrix">${data.resultado.L.map(r => r.map(v => v.toFixed(3).padStart(10)).join(' ')).join('\n')}</pre>
+                <pre class="step-matrix">${data.resultado.L.map(r => r.map(v => window.formatNumber(v).padStart(12)).join(' ')).join('\n')}</pre>
             </div>
             <div class="step-card">
                 <div class="step-msg">Matriz U (Upper)</div>
-                <pre class="step-matrix">${data.resultado.U.map(r => r.map(v => v.toFixed(3).padStart(10)).join(' ')).join('\n')}</pre>
+                <pre class="step-matrix">${data.resultado.U.map(r => r.map(v => window.formatNumber(v).padStart(12)).join(' ')).join('\n')}</pre>
             </div>
         `;
     } else if (data.resultado.detalles) {
         pasosHtml = data.resultado.detalles.map(d => `
             <div class="step-card">
-                <div class="step-msg">Matriz para ${d.var} (Det = ${d.det.toFixed(2)})</div>
-                <pre class="step-matrix">${d.matrix.map(r => r.map(v => v.toFixed(2).padStart(8)).join(' ')).join('\n')}</pre>
+                <div class="step-msg">Matriz para ${d.var} (Det = ${window.formatNumber(d.det)})</div>
+                <pre class="step-matrix">${d.matrix.map(r => r.map(v => window.formatNumber(v).padStart(12)).join(' ')).join('\n')}</pre>
             </div>
         `).join('');
     }
@@ -138,7 +157,7 @@ async function calcularLin() {
         pasosHtml += `
             <div class="step-card success">
                 <div class="step-msg">Matriz Inversa Final (A⁻¹)</div>
-                <pre class="step-matrix">${data.resultado.inversa.map(r => r.map(v => v.toFixed(4).padStart(10)).join(' ')).join('\n')}</pre>
+                <pre class="step-matrix">${data.resultado.inversa.map(r => r.map(v => window.formatNumber(v).padStart(12)).join(' ')).join('\n')}</pre>
             </div>
         `;
     }

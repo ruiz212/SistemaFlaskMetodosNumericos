@@ -259,12 +259,12 @@ async function calcularNL(force = false) {
         ecuacion: document.getElementById('ecuacion-nl')?.value,
         metodo: document.getElementById('metodo-nl')?.value,
         tol: document.getElementById('tol-nl')?.value,
-        angulo: document.getElementById('angulo-nl')?.value || 'rad'
+        angulo: window.getAngleMode()
     };
     
     if (!fields.ecuacion || !fields.tol) return showAlert('Atención', 'Ingresa una ecuación y la tolerancia.', 'warning');
 
-    const payload = { ...fields, force };
+    const payload = { ...fields, force, cfg: window.getAdvancedSettings() };
     
     // Recolección dinámica de parámetros según el método
     if (['Bisección', 'Regla Falsa'].includes(fields.metodo)) {
@@ -324,18 +324,21 @@ function renderTablaNL(resultados, metodo) {
     let headers = '';
     let rows = '';
 
+    const cfg = window.getAdvancedSettings() || {};
+    const errLabel = cfg.nl_error_mode === 'absoluto' ? 'Ea' : 'Er%';
+
     if (['Bisección', 'Regla Falsa'].includes(metodo)) {
-        headers = `<th>It</th><th>a</th><th>c</th><th>b</th><th>f(a)</th><th>f(c)</th><th>f(b)</th><th>f(a)*f(c)</th><th>Ea</th><th>Er%</th>`;
-        rows = resultados.map(r => `<tr><td>${r.iter}</td><td>${r.a}</td><td>${r.c}</td><td>${r.b}</td><td>${r.fa}</td><td>${r.fc}</td><td>${r.fb}</td><td>${r.prueba}</td><td>${r.ea}</td><td>${r.error}</td></tr>`).join('');
+        headers = `<th>It</th><th>a</th><th>c</th><th>b</th><th>f(a)</th><th>f(c)</th><th>f(b)</th><th>f(a)*f(c)</th><th>${errLabel}</th>`;
+        rows = resultados.map(r => `<tr><td>${r.iter}</td><td>${window.formatNumber(r.a)}</td><td>${window.formatNumber(r.c)}</td><td>${window.formatNumber(r.b)}</td><td>${window.formatNumber(r.fa)}</td><td>${window.formatNumber(r.fc)}</td><td>${window.formatNumber(r.fb)}</td><td>${window.formatNumber(r.prueba)}</td><td>${r.error}</td></tr>`).join('');
     } else if (metodo === 'Newton-Raphson') {
-        headers = `<th>It</th><th>ci</th><th>f(ci)</th><th>f'(ci)</th><th>ci+1</th><th>Er%</th>`;
-        rows = resultados.map(r => `<tr><td>${r.iter}</td><td>${r.ci}</td><td>${r.fci}</td><td>${r.dfci}</td><td>${r.cimas1}</td><td>${r.error}</td></tr>`).join('');
+        headers = `<th>It</th><th>ci</th><th>f(ci)</th><th>f'(ci)</th><th>ci+1</th><th>${errLabel}</th>`;
+        rows = resultados.map(r => `<tr><td>${r.iter}</td><td>${window.formatNumber(r.ci)}</td><td>${window.formatNumber(r.fci)}</td><td>${window.formatNumber(r.dfci)}</td><td>${window.formatNumber(r.cimas1)}</td><td>${r.error}</td></tr>`).join('');
     } else if (metodo === 'Secante') {
-        headers = `<th>It</th><th>Ci</th><th>f(ci)</th><th>Er%</th>`;
-        rows = resultados.map(r => `<tr><td>${r.iter}</td><td>${r.ci}</td><td>${r.fci}</td><td>${r.error}</td></tr>`).join('');
+        headers = `<th>It</th><th>Ci</th><th>f(ci)</th><th>${errLabel}</th>`;
+        rows = resultados.map(r => `<tr><td>${r.iter}</td><td>${window.formatNumber(r.ci)}</td><td>${window.formatNumber(r.fci)}</td><td>${r.error}</td></tr>`).join('');
     } else if (metodo === 'Punto fijo') {
-        headers = `<th>It</th><th>Ci</th><th>g(Ci)</th><th>Er%</th>`;
-        rows = resultados.map(r => `<tr><td>${r.iter}</td><td>${r.ci}</td><td>${r.gci}</td><td>${r.error}</td></tr>`).join('');
+        headers = `<th>It</th><th>Ci</th><th>g(Ci)</th><th>${errLabel}</th>`;
+        rows = resultados.map(r => `<tr><td>${r.iter}</td><td>${window.formatNumber(r.ci)}</td><td>${window.formatNumber(r.gci)}</td><td>${r.error}</td></tr>`).join('');
     }
 
     thead.innerHTML = headers;
@@ -405,7 +408,7 @@ async function obtenerDespejes() {
                       
         const evalHtml = d.eval !== null ? `
             <div class="despeje-step-title">PASO 3: Evaluación Numérica ($x_0$)</div>
-            <div class="despeje-eval">|g'(${x0})| ≈ ${d.eval.toFixed(6)}</div>
+            <div class="despeje-eval">|g'(${x0})| ≈ ${window.formatNumber(d.eval)}</div>
             <div class="despeje-step-title">PASO 4: Criterio y Conclusión</div>
             <div class="despeje-conclusion">${d.converge ? 'EL MÉTODO CONVERGE' : 'EL MÉTODO DIVERGE'}</div>
         ` : '';
@@ -516,7 +519,7 @@ function actualizarCamposPol() {
 async function calcularPol() {
     const metodo = document.getElementById('metodo-pol')?.value;
     const tol = document.getElementById('tol-pol')?.value;
-    const payload = { metodo, tol };
+    const payload = { metodo, tol, cfg: window.getAdvancedSettings() };
 
     if (metodo === 'Müller') {
         payload.x0 = document.getElementById('pol-x0')?.value;
@@ -549,8 +552,8 @@ async function calcularPol() {
     if (data.error) return showAlert('Error', data.error, 'error');
     
     if (metodo === 'Bairstow' && data.r_init !== undefined) {
-        document.getElementById('pol-r0-bair').value = data.r_init.toFixed(4);
-        document.getElementById('pol-s0-bair').value = data.s_init.toFixed(4);
+        document.getElementById('pol-r0-bair').value = window.formatNumber(data.r_init);
+        document.getElementById('pol-s0-bair').value = window.formatNumber(data.s_init);
     }
     
     renderTablaPol(data.resultados, metodo, data.encabezados);
@@ -630,7 +633,8 @@ async function calcularSis() {
             n,
             tol: document.getElementById('tol-sis')?.value,
             iter: document.getElementById('iter-sis')?.value,
-            angulo: document.getElementById('angulo-sis')?.value || 'rad',
+            angulo: window.getAngleMode(),
+            cfg: window.getAdvancedSettings(),
             funciones: [],
             x0: []
         };

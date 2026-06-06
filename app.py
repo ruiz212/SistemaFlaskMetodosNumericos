@@ -14,7 +14,8 @@ from metodos.grafica_nl import generar_datos_grafica
 from metodos.sistemas_lineales import (
     eliminacion_gaussiana, factorizacion_lu, 
     regla_de_cramer, gauss_jordan, matriz_inversa,
-    metodo_jacobi, metodo_gauss_seidel
+    metodo_jacobi, metodo_gauss_seidel,
+    ordenar_matriz_dominante
 )
 from metodos.despejes import despejar_ecuacion
 
@@ -68,6 +69,7 @@ def calcular_nl():
     metodo = data.get('metodo')
     tol_str = data.get('tol')
     modo_angulo = data.get('angulo', 'rad')
+    cfg = data.get('cfg', {})
     
     if not ecuacion:
         return jsonify({'error': 'Ingresa una ecuación.'})
@@ -88,24 +90,22 @@ def calcular_nl():
         if metodo == "Bisección":
             a = float(data.get('a'))
             b = float(data.get('b'))
-            res = biseccion(a, b, tol, f)
+            res = biseccion(a, b, tol, f, cfg)
         elif metodo == "Regla Falsa":
             a = float(data.get('a'))
             b = float(data.get('b'))
-            res = regla_falsa(a, b, tol, f)
+            res = regla_falsa(a, b, tol, f, cfg)
         elif metodo == "Newton-Raphson":
             ci = float(data.get('ci'))
-            res = newton_raphson(ci, tol, f, df)
-
+            res = newton_raphson(ci, tol, f, df, cfg)
         elif metodo == "Secante":
             x0 = float(data.get('x0'))
             x1 = float(data.get('x1'))
-            res = secante(x0, x1, tol, f)
-            
+            res = secante(x0, x1, tol, f, cfg)
         elif metodo == "Punto fijo":
             x0 = float(data.get('x0'))
             g_prima = df(x0)
-            res = punto_fijo(x0, tol, f, data.get('force', False), g_prima)
+            res = punto_fijo(x0, tol, f, data.get('force', False), g_prima, cfg)
             
         if "error" in res:
             return jsonify({'error': res["error"]})
@@ -166,6 +166,7 @@ def calcular_pol():
     metodo = data.get('metodo')
     a_input = data.get('coeficientes', [])
     tol_str = data.get('tol', '')
+    cfg = data.get('cfg', {})
     
     try:
         tol_porcentaje = float(tol_str)
@@ -185,7 +186,7 @@ def calcular_pol():
             x0 = float(data.get('x0'))
             x1 = float(data.get('x1'))
             x2 = float(data.get('x2'))
-            res = metodo_muller(x0=x0, x1=x1, x2=x2, tol_porcentaje=tol_porcentaje, a_coefs=a_input)
+            res = metodo_muller(x0=x0, x1=x1, x2=x2, tol_porcentaje=tol_porcentaje, a_coefs=a_input, cfg=cfg)
         else:
             if not a_input:
                 return jsonify({'error': 'Faltan coeficientes.'})
@@ -194,14 +195,14 @@ def calcular_pol():
             if metodo == "Bairstow":
                 r0 = data.get('r0')
                 s0 = data.get('s0')
-                res = metodo_bairstow(a_input, tol_porcentaje, r0, s0)
+                res = metodo_bairstow(a_input, tol_porcentaje, r0, s0, cfg)
             elif metodo == "Horner-Newton":
                 r0_str = data.get('r0')
                 try:
                     r = complex(r0_str) if 'j' in r0_str else float(r0_str)
                 except ValueError:
                     return jsonify({'error': 'Valor inicial inválido.'})
-                res = metodo_horner_newton(a_input, r, tol_porcentaje)
+                res = metodo_horner_newton(a_input, r, tol_porcentaje, cfg)
             
         if "error" in res:
             return jsonify({'error': res["error"], 'consola': "\n".join(res.get("consola", []))})
@@ -261,12 +262,17 @@ def calcular_sis():
     except Exception as e:
         return jsonify({'error': f"Error inesperado: {str(e)}"})
 
+@app.route('/configuracion')
+def configuracion():
+    return render_template('configuracion.html')
+
 @app.route('/api/calcular_sis_lin', methods=['POST'])
 def calcular_sis_lin():
     data = request.json
     metodo = data.get('metodo')
     A = np.array(data.get('A'))
     b = np.array(data.get('b'))
+    cfg = data.get('cfg', {})
     
     if metodo == "Eliminación Gaussiana":
         res = eliminacion_gaussiana(A, b)
@@ -282,14 +288,26 @@ def calcular_sis_lin():
         x0 = data.get('x0', [0.0]*len(b))
         tol = float(data.get('tol', 0.001))
         max_iter = int(data.get('max_iter', 100))
-        res = metodo_jacobi(A, b, x0, tol, max_iter)
+        res = metodo_jacobi(A, b, x0, tol, max_iter, cfg)
     elif metodo == "Gauss-Seidel":
         x0 = data.get('x0', [0.0]*len(b))
         tol = float(data.get('tol', 0.001))
         max_iter = int(data.get('max_iter', 100))
-        res = metodo_gauss_seidel(A, b, x0, tol, max_iter)
+        res = metodo_gauss_seidel(A, b, x0, tol, max_iter, cfg)
     else:
         return jsonify({'error': 'Método no soportado'})
+        
+    return jsonify({'success': True, 'resultado': res})
+
+@app.route('/api/ordenar_matriz', methods=['POST'])
+def api_ordenar_matriz():
+    data = request.json
+    A = np.array(data.get('A'))
+    b = np.array(data.get('b'))
+    
+    res = ordenar_matriz_dominante(A, b)
+    if "error" in res:
+        return jsonify({'error': res["error"]})
         
     return jsonify({'success': True, 'resultado': res})
 
@@ -461,13 +479,14 @@ def calcular_interpolacion():
     x_puntos = np.array(data.get('x'), dtype=float)
     y_puntos = np.array(data.get('y'), dtype=float)
     metodo = data.get('metodo')
+    cfg = data.get('cfg', {})
     
     if metodo == "Diferencias Divididas":
         from metodos.interpolacion_newton import NewtonDividedDifferences
         try:
             # Tolerancia por defecto o desde el frontend si existiera
             tolerancia = float(data.get('tol', 0.001))
-            interpolador = NewtonDividedDifferences(x_puntos, y_puntos, tolerancia=tolerancia)
+            interpolador = NewtonDividedDifferences(x_puntos, y_puntos, tolerancia=tolerancia, cfg=cfg)
             interpolador.calcular_polinomio_optimo()
             
             coefs = interpolador.coeficientes.tolist() if hasattr(interpolador.coeficientes, 'tolist') else interpolador.coeficientes
@@ -484,8 +503,12 @@ def calcular_interpolacion():
                 'success': True, 
                 'coefs': coefs,
                 'ecuacion': ecuacion,
+                'polinomios_pasos': interpolador.obtener_polinomios_pasos(),
+                'errores_pasos': interpolador.errores_pasos,
+                'razon_detencion': interpolador.razon_detencion,
                 'grado': grado,
-                'tabla': tabla_serializable
+                'tabla': tabla_serializable,
+                'warnings': interpolador.warnings
             })
         except Exception as e:
             return jsonify({'error': str(e)})

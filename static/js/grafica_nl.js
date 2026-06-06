@@ -134,7 +134,7 @@
                         order: 2,
                     },
                     {
-                        label: `Raíz ≈ ${raiz.toFixed(6)}`,
+                        label: `Raíz ≈ ${window.formatNumber(raiz)}`,
                         data: raizData,
                         type: 'scatter',
                         backgroundColor: COLORS.rootFill,
@@ -182,7 +182,7 @@
                         bodyFont:  { family: "'Fira Code', monospace", size: 12 },
                         callbacks: {
                             title: (items) => items[0].dataset.label,
-                            label: (item) => ` x = ${item.parsed.x.toFixed(6)},  f(x) = ${item.parsed.y.toFixed(6)}`,
+                            label: (item) => ` x = ${window.formatNumber(item.parsed.x)},  f(x) = ${window.formatNumber(item.parsed.y)}`,
                         }
                     },
                 },

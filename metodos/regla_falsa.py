@@ -1,4 +1,7 @@
-def regla_falsa(a, b, tol, f):
+def regla_falsa(a, b, tol, f, cfg=None):
+    if cfg is None: cfg = {}
+    iter_max = int(cfg.get('nl_iter_max', 500))
+    error_mode = cfg.get('nl_error_mode', 'relativo')
     resultados = []
     fa, fb = f(a), f(b)
     if fa is None or fb is None: 
@@ -21,30 +24,34 @@ def regla_falsa(a, b, tol, f):
             
         fc = f(c_actual)
         if fc is None:
-            return {"error": f"Error evaluando f({c_actual:.6f})."}
+            return {"error": f"Error evaluando f({c_actual:.15f})."}
         fc = fc.real if isinstance(fc, complex) else fc
         prueba_signo = fa * fc
         
         if c_anterior is None:
-            error_rp  = float('inf')
+            err_val = float('inf')
             error_str = "---"
-        elif c_actual != 0:
-            error_rp  = abs((c_actual - c_anterior) / c_actual) * 100.0
-            error_str = f"{error_rp:.6f}%"
         else:
-            error_rp  = 0.0
-            error_str = "0.000000%"
+            if error_mode == 'absoluto':
+                err_val = abs(c_actual - c_anterior)
+                error_str = f"{err_val:.15f}"
+            else:
+                if c_actual != 0:
+                    err_val = abs((c_actual - c_anterior) / c_actual) * 100.0
+                    error_str = f"{err_val:.15f}%"
+                else:
+                    err_val = 0.0
+                    error_str = "0.000000%"
         
         ea = abs(b - a)
         
         resultados.append({
-            'iter': i, 'a': f"{a:.6f}", 'c': f"{c_actual:.6f}", 'b': f"{b:.6f}",
-            'fa': f"{fa:.6f}", 'fc': f"{fc:.6f}", 'fb': f"{fb:.6f}", 
-            'prueba': f"{prueba_signo:.6f}", 'ea': f"{ea:.6f}", 'error': error_str
+            'iter': i, 'a': f"{a:.15f}", 'c': f"{c_actual:.15f}", 'b': f"{b:.15f}",
+            'fa': f"{fa:.15f}", 'fc': f"{fc:.15f}", 'fb': f"{fb:.15f}", 
+            'prueba': f"{prueba_signo:.15f}", 'ea': f"{ea:.15f}", 'error': error_str
         })
         
-        # Condición de parada
-        if (c_anterior is not None and error_rp < tol) or fc == 0:
+        if (c_anterior is not None and err_val < tol) or fc == 0:
             raiz_encontrada = c_actual
             break
             
@@ -55,7 +62,7 @@ def regla_falsa(a, b, tol, f):
 
         c_anterior = c_actual
         i += 1
-        if i > 501:
-            return {"error": "Límite de iteraciones alcanzado (500)."}
+        if i > iter_max:
+            return {"error": f"Límite de iteraciones alcanzado ({iter_max})."}
             
     return {"resultados": resultados, "raiz": raiz_encontrada, "mensaje": f"Regla Falsa finalizado | Raíz: {raiz_encontrada:.8f}"}

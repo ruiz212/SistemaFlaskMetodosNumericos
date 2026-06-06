@@ -1,6 +1,11 @@
 import math
 
-def metodo_bairstow(a_input, tol_porcentaje, r0_manual=None, s0_manual=None):
+def metodo_bairstow(a_input, tol_porcentaje, r0_manual=None, s0_manual=None, cfg=None):
+    if cfg is None: cfg = {}
+    try:
+        imag_tol = float(cfg.get('pol_imag_tol', 1e-10))
+    except (ValueError, TypeError):
+        imag_tol = 1e-10
     resultados = []
     consola = []
     a = a_input[::-1] 
@@ -43,7 +48,7 @@ def metodo_bairstow(a_input, tol_porcentaje, r0_manual=None, s0_manual=None):
         if r_init is None and s_init is None:
             r_init, s_init = r, s
             
-        consola.append(f"\nPolinomio Grado {n}. Usando fór. {tipo} (r0={r:.4f}, s0={s:.4f})")
+        consola.append(f"\nPolinomio Grado {n}. Usando fór. {tipo} (r0={r:.15f}, s0={s:.15f})")
         
         for it in range(0, max_iter):
             b = [0.0] * (n + 1)
@@ -71,21 +76,27 @@ def metodo_bairstow(a_input, tol_porcentaje, r0_manual=None, s0_manual=None):
             
             disc = r**2 + 4*s
             if disc >= 0:
-                x1 = f"{(r + math.sqrt(disc)) / 2:.4f}"
-                x2 = f"{(r - math.sqrt(disc)) / 2:.4f}"
+                x1 = f"{(r + math.sqrt(disc)) / 2:.15f}"
+                x2 = f"{(r - math.sqrt(disc)) / 2:.15f}"
             else:
-                x1 = f"{r/2:.4f}+{math.sqrt(-disc)/2:.4f}i"
-                x2 = f"{r/2:.4f}-{math.sqrt(-disc)/2:.4f}i"
+                real_part = r/2
+                imag_part = math.sqrt(-disc)/2
+                if imag_part < imag_tol:
+                    x1 = f"{real_part:.15f}"
+                    x2 = f"{real_part:.15f}"
+                else:
+                    x1 = f"{real_part:.15f}+{imag_part:.15f}i"
+                    x2 = f"{real_part:.15f}-{imag_part:.15f}i"
             
             fila = [str(it)]
-            for i in range(grado_inicial, -1, -1): fila.append(f"{b[i]:.4f}" if i <= n else "0.0")
-            for i in range(grado_inicial, 0, -1): fila.append(f"{c[i]:.4f}" if i <= n else "0.0")
-            err_r_str = f"{err_r:.4f}%" if it > 0 else "---"
-            err_s_str = f"{err_s:.4f}%" if it > 0 else "---"
+            for i in range(grado_inicial, -1, -1): fila.append(f"{b[i]:.15f}" if i <= n else "0.0")
+            for i in range(grado_inicial, 0, -1): fila.append(f"{c[i]:.15f}" if i <= n else "0.0")
+            err_r_str = f"{err_r:.15f}%" if it > 0 else "---"
+            err_s_str = f"{err_s:.15f}%" if it > 0 else "---"
             
             condicion = "Finalizar" if (it > 0 and err_r < tol_porcentaje and err_s < tol_porcentaje) else "Continuar"
             
-            fila.extend([f"{dr:.4f}", f"{ds:.4f}", f"{r_nuevo:.4f}", f"{s_nuevo:.4f}", 
+            fila.extend([f"{dr:.15f}", f"{ds:.15f}", f"{r_nuevo:.15f}", f"{s_nuevo:.15f}", 
                             err_r_str, err_s_str, x1, x2, condicion])
             
             resultados.append({'is_sep': False, 'data': fila})
@@ -100,8 +111,8 @@ def metodo_bairstow(a_input, tol_porcentaje, r0_manual=None, s0_manual=None):
         a = b[2:n+1]
         n = len(a) - 1
         # Formatear el divisor matemático: x^2 - rx - s
-        r_term = f"- {r:.4f}x" if r > 0 else (f"+ {abs(r):.4f}x" if r < 0 else "")
-        s_term = f"- {s:.4f}" if s > 0 else (f"+ {abs(s):.4f}" if s < 0 else "")
+        r_term = f"- {r:.15f}x" if r > 0 else (f"+ {abs(r):.15f}x" if r < 0 else "")
+        s_term = f"- {s:.15f}" if s > 0 else (f"+ {abs(s):.15f}" if s < 0 else "")
         divisor_str = f"x^2 {r_term} {s_term}".replace("  ", " ").strip()
         
         # Formatear polinomio deflactado de mayor a menor grado
@@ -111,11 +122,11 @@ def metodo_bairstow(a_input, tol_porcentaje, r0_manual=None, s0_manual=None):
             signo = " + " if coef >= 0 and terminos_def else (" - " if terminos_def else ("-" if coef < 0 else ""))
             val = abs(coef)
             if i == 0:
-                terminos_def.append(f"{signo}{val:.4f}")
+                terminos_def.append(f"{signo}{val:.15f}")
             elif i == 1:
-                terminos_def.append(f"{signo}{val:.4f}x")
+                terminos_def.append(f"{signo}{val:.15f}x")
             else:
-                terminos_def.append(f"{signo}{val:.4f}x^{i}")
+                terminos_def.append(f"{signo}{val:.15f}x^{i}")
         pol_str = "".join(terminos_def)
 
         consola.append(f">> Polinomio Divisor: {divisor_str}")
@@ -127,11 +138,16 @@ def metodo_bairstow(a_input, tol_porcentaje, r0_manual=None, s0_manual=None):
         rf, sf = -a[1]/a[2], -a[0]/a[2]
         disc = rf**2 + 4*sf
         if disc >= 0:
-            raices_totales.extend([f"{(rf + math.sqrt(disc)) / 2:.4f}", f"{(rf - math.sqrt(disc)) / 2:.4f}"])
+            raices_totales.extend([f"{(rf + math.sqrt(disc)) / 2:.15f}", f"{(rf - math.sqrt(disc)) / 2:.15f}"])
         else:
-            raices_totales.extend([f"{rf/2:.4f}+{math.sqrt(-disc)/2:.4f}i", f"{rf/2:.4f}-{math.sqrt(-disc)/2:.4f}i"])
+            real_part = rf/2
+            imag_part = math.sqrt(-disc)/2
+            if imag_part < imag_tol:
+                raices_totales.extend([f"{real_part:.15f}", f"{real_part:.15f}"])
+            else:
+                raices_totales.extend([f"{real_part:.15f}+{imag_part:.15f}i", f"{real_part:.15f}-{imag_part:.15f}i"])
     elif n == 1:
-        raices_totales.append(f"{-a[0]/a[1]:.4f}")
+        raices_totales.append(f"{-a[0]/a[1]:.15f}")
         
     consola.append("\n=== RAÍCES FINALES ===")
     for i, raiz in enumerate(raices_totales):

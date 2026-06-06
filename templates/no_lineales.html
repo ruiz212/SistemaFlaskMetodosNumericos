@@ -8,8 +8,13 @@
 <div class="page-container fade-in" id="page-content-nl">
     <h2 class="page-title">Buscador de Raíces (Ecuaciones)</h2>
 
-    <div class="glass-panel form-panel">
-        <div class="form-row">
+    <div class="glass-panel form-panel" style="position: relative;">
+        <!-- Título de fondo dinámico -->
+        <div id="bg-method-name" style="position: absolute; left: 32px; top: 32px; font-family: 'Outfit', sans-serif; font-size: 4rem; font-weight: 800; color: rgba(245, 158, 11, 0.15); pointer-events: none; user-select: none; z-index: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%;">
+            Bisección
+        </div>
+
+        <div class="form-row" style="position: relative; z-index: 1; padding-top: 60px;">
             <div class="input-group flex-2">
                 <label>Ecuación f(x):</label>
                 <input type="text" id="ecuacion-nl" placeholder="Ej: x**3 - 3.5*x**2 + 2.75*x - 0.5"
@@ -21,7 +26,7 @@
             </div>
             <div class="input-group">
                 <label>Método:</label>
-                <select id="metodo-nl" class="input-control" onchange="actualizarCamposNL()">
+                <select id="metodo-nl" class="input-control" onchange="actualizarCamposNL(); actualizarNombreMetodoNL();">
                     <option value="Bisección">Bisección</option>
                     <option value="Regla Falsa">Regla Falsa</option>
                     <option value="Newton-Raphson">Newton-Raphson</option>
@@ -137,6 +142,21 @@
 <script src="{{ url_for('static', filename='js/grafica_nl.js') }}"></script>
 
 <script>
+    function actualizarNombreMetodoNL() {
+        const select = document.getElementById('metodo-nl');
+        if (select && typeof animateMethodNameChange === 'function') {
+            animateMethodNameChange('bg-method-name', select.value);
+        } else {
+            const bgText = document.getElementById('bg-method-name');
+            if (bgText && select) bgText.innerText = select.value;
+        }
+    }
+    
+    // Llamar al cargar para inicializar el nombre correcto
+    document.addEventListener('DOMContentLoaded', () => {
+        actualizarNombreMetodoNL();
+    });
+
     // ── Sobreescribir calcularNL para llamar también a la gráfica ──────────────
     (function () {
         const _calcularNLOriginal = window.calcularNL;

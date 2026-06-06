@@ -4,15 +4,20 @@
 <div class="page-container fade-in">
     <h2 class="page-title">Interpolación Polinomial</h2>
     
-    <div class="glass-panel form-panel">
-        <div class="form-row align-center">
+    <div class="glass-panel form-panel" style="position: relative;">
+        <!-- Título de fondo dinámico -->
+        <div id="bg-method-name" style="position: absolute; left: 32px; top: 32px; font-family: 'Outfit', sans-serif; font-size: 4rem; font-weight: 800; color: rgba(245, 158, 11, 0.15); pointer-events: none; user-select: none; z-index: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%;">
+            Diferencias Divididas
+        </div>
+
+        <div class="form-row align-center" style="position: relative; z-index: 1; padding-top: 60px;">
             <div class="input-group flex-1">
                 <label>Número de Puntos (n):</label>
                 <input type="number" id="n-inter" value="3" min="2" max="20" class="input-control text-center" onchange="generarCamposInterpolacion()">
             </div>
             <div class="input-group flex-2">
                 <label>Método:</label>
-                <select id="metodo-inter" class="input-control">
+                <select id="metodo-inter" class="input-control" onchange="actualizarNombreMetodoInter()">
                     <option value="Diferencias Divididas">Diferencias Divididas (Newton)</option>
                 </select>
             </div>
@@ -33,18 +38,31 @@
         </div>
     </div>
 
-    <div class="result-panel mt-4 flex-column" id="resultado-inter-container" style="display:none;">
-        <div id="resultado-inter" class="resultado-tarjeta success mb-3">
-            <!-- Polinomio resultante -->
-        </div>
-        <div class="glass-panel w-full">
-            <label class="section-label">Tabla de Diferencias Divididas:</label>
-            <div class="table-responsive">
-                <table id="tabla-inter" class="data-table">
+    <div class="result-panel mt-4 flex-column" id="resultado-inter-container" style="display:none; flex-direction: column !important; gap: 24px;">
+        <!-- Tabla Arriba y más grande -->
+        <div class="glass-panel w-full" style="padding: 24px;">
+            <label class="section-label" style="font-size: 1.2rem; color: var(--vp-gold);">TABLA DE DIFERENCIAS DIVIDIDAS:</label>
+            <div class="table-responsive mt-3">
+                <table id="tabla-inter" class="data-table" style="font-size: 1.1rem;">
                     <thead id="thead-inter"></thead>
                     <tbody id="tbody-inter"></tbody>
                 </table>
             </div>
+            
+            <!-- Bloque de Detalle de Errores y Parada -->
+            <div id="razon-detencion-container" class="mt-4 p-4" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; display: none;">
+                <h4 style="color: var(--vp-violet-l); font-size: 1rem; margin-bottom: 8px;">Análisis de Error y Criterio de Detención</h4>
+                <div id="lista-errores" style="font-family: monospace; font-size: 0.95rem; color: var(--vp-muted); margin-bottom: 12px;"></div>
+                <div id="texto-razon-detencion" style="font-size: 1rem; font-weight: bold; color: var(--color-success);"></div>
+            </div>
+            
+            <!-- Contenedor para advertencias -->
+            <div id="warnings-container" class="mt-4" style="display: none;"></div>
+        </div>
+
+        <!-- Resultados (Ecuaciones) Abajo -->
+        <div id="resultado-inter" class="resultado-tarjeta success" style="flex-direction: column; align-items: flex-start; width: 100%;">
+            <!-- Polinomios generados -->
         </div>
     </div>
 </div>
@@ -52,6 +70,23 @@
 
 {% block scripts %}
 <script>
+function actualizarNombreMetodoInter() {
+    const select = document.getElementById('metodo-inter');
+    if (select && typeof animateMethodNameChange === 'function') {
+        const txt = select.options[select.selectedIndex].text.split(' (')[0];
+        animateMethodNameChange('bg-method-name', txt);
+    } else {
+        const bgText = document.getElementById('bg-method-name');
+        if (bgText && select) {
+            bgText.innerText = select.options[select.selectedIndex].text.split(' (')[0];
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    actualizarNombreMetodoInter();
+});
+
 function generarCamposInterpolacion() {
     const n = parseInt(document.getElementById('n-inter').value);
     const container = document.getElementById('container-inter');
@@ -81,14 +116,53 @@ async function calcularInter() {
         x, 
         y, 
         metodo: document.getElementById('metodo-inter').value,
-        tol: document.getElementById('tol-inter').value
+        tol: document.getElementById('tol-inter').value,
+        cfg: window.getAdvancedSettings ? window.getAdvancedSettings() : {}
     };
     const data = await performRequest('/api/calcular_interpolacion', payload, 'btn-calc-inter');
     
     if (data.error) return showAlert('Error', data.error, 'error');
     
     document.getElementById('resultado-inter-container').style.display = 'flex';
-    document.getElementById('resultado-inter').innerHTML = `<strong>Polinomio Óptimo (Grado ${data.grado}):</strong> P(x) = ${data.ecuacion}`;
+    
+    // Función para limpiar Sympy y pasar a LaTeX
+    const sympyToLatex = (expr) => {
+        if (!expr || expr === "Polinomio no calculado.") return "P(x)";
+        let cleaned = expr.replace(/\*\*/g, '^');
+        try {
+            return math.parse(cleaned).toTex({parenthesis: 'auto'});
+        } catch(e) {
+            return cleaned;
+        }
+    };
+
+    let resContainer = document.getElementById('resultado-inter');
+    let htmlContent = '';
+    
+    if (data.polinomios_pasos && data.polinomios_pasos.length > 0) {
+        data.polinomios_pasos.forEach((expr, idx) => {
+            if (idx === data.polinomios_pasos.length - 1) {
+                htmlContent += `<div class="mt-4 w-full"><strong style="color: var(--color-success); font-size: 1.2em; display:block; text-align:center;">Polinomio Óptimo (Grado ${data.grado}):</strong><div id="katex-optimo"></div></div>`;
+            } else {
+                htmlContent += `<div class="mt-3 w-full" style="opacity: 0.8;"><span style="color: var(--text-secondary); display:block; text-align:center;">Polinomio (Grado ${idx}):</span><div id="katex-paso-${idx}"></div></div>`;
+            }
+        });
+        resContainer.innerHTML = htmlContent;
+
+        // Renderizar con KaTeX
+        data.polinomios_pasos.forEach((expr, idx) => {
+            let latex = sympyToLatex(expr);
+            if (idx === data.polinomios_pasos.length - 1) {
+                katex.render(`P(x) = ${latex}`, document.getElementById('katex-optimo'), {displayMode: true, throwOnError: false});
+            } else {
+                katex.render(`P_{${idx}}(x) = ${latex}`, document.getElementById(`katex-paso-${idx}`), {displayMode: true, throwOnError: false});
+            }
+        });
+    } else {
+        let latex = sympyToLatex(data.ecuacion);
+        resContainer.innerHTML = `<strong style="color: var(--color-success); font-size: 1.2em; display:block; text-align:center;">Polinomio Óptimo (Grado ${data.grado}):</strong><div id="katex-optimo"></div>`;
+        katex.render(`P(x) = ${latex}`, document.getElementById('katex-optimo'), {displayMode: true, throwOnError: false});
+    }
     
     // Renderizar la tabla de diferencias divididas
     const thead = document.getElementById('thead-inter');
@@ -107,11 +181,45 @@ async function calcularInter() {
         data.tabla.forEach((row, i) => {
             let trHtml = `<tr><td>${document.getElementById(`inter-x-${i}`).value}</td>`;
             row.forEach((val) => {
-                trHtml += `<td>${val !== "" ? Number(val).toFixed(4) : ""}</td>`;
+                trHtml += `<td>${val !== "" ? window.formatNumber(val) : ""}</td>`;
             });
             trHtml += '</tr>';
             tbody.innerHTML += trHtml;
         });
+    }
+    
+    // Mostrar Errores y Razón de Detención
+    if (data.razon_detencion) {
+        document.getElementById('razon-detencion-container').style.display = 'block';
+        document.getElementById('texto-razon-detencion').innerText = `Razón de detención: ${data.razon_detencion}`;
+        
+        if (data.errores_pasos && data.errores_pasos.length > 0) {
+            let listHtml = '<ul>';
+            data.errores_pasos.forEach((err, idx) => {
+                listHtml += `<li>Error Máximo Evaluado (Grado ${idx + 1}): <span style="color: var(--vp-gold);">${err.toExponential(6)}</span></li>`;
+            });
+            listHtml += '</ul>';
+            document.getElementById('lista-errores').innerHTML = listHtml;
+        } else {
+            document.getElementById('lista-errores').innerHTML = '';
+        }
+    } else {
+        document.getElementById('razon-detencion-container').style.display = 'none';
+    }
+    
+    // Advertencias
+    const warnContainer = document.getElementById('warnings-container');
+    if (data.warnings && data.warnings.length > 0) {
+        let warnHtml = `<div class="p-3" style="background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; border-radius: 4px;">
+            <h5 style="color: #f59e0b; margin-top: 0;">Advertencias:</h5>
+            <ul style="margin-bottom: 0; padding-left: 20px; color: #fbbf24;">`;
+        data.warnings.forEach(w => warnHtml += `<li>${w}</li>`);
+        warnHtml += `</ul></div>`;
+        warnContainer.innerHTML = warnHtml;
+        warnContainer.style.display = 'block';
+    } else {
+        warnContainer.style.display = 'none';
+        warnContainer.innerHTML = '';
     }
     
     playSound('success');
