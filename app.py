@@ -513,6 +513,95 @@ def calcular_interpolacion():
         except Exception as e:
             return jsonify({'error': str(e)})
             
+    elif metodo == "Lagrange":
+        from metodos.interpolacion_lagrange import LagrangeInterpolator
+        try:
+            interpolador = LagrangeInterpolator(x_puntos, y_puntos, cfg=cfg)
+            interpolador.calcular_polinomio()
+            return jsonify({
+                'success': True, 
+                'ecuacion': interpolador.obtener_ecuacion_string(),
+                'polinomios_pasos': interpolador.obtener_polinomios_pasos(),
+                'grado': int(interpolador.grado) if interpolador.grado else len(x_puntos)-1,
+                'warnings': interpolador.warnings
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)})
+
+    elif metodo == "Trazadores Cúbicos":
+        from metodos.interpolacion_splines import CubicSplinesInterpolator
+        try:
+            interpolador = CubicSplinesInterpolator(x_puntos, y_puntos, cfg=cfg)
+            interpolador.calcular_splines()
+            intervalos = [[float(p['intervalo'][0]), float(p['intervalo'][1])] for p in interpolador.polinomios]
+            return jsonify({
+                'success': True, 
+                'polinomios_pasos': interpolador.obtener_polinomios_pasos(),
+                'intervalos': intervalos,
+                'warnings': interpolador.warnings
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)})
+
+    elif metodo == "Interpolación Lineal":
+        from metodos.interpolacion_lineal import InterpolacionLineal
+        try:
+            interpolador = InterpolacionLineal(x_puntos, y_puntos, cfg=cfg)
+            interpolador.calcular_polinomio()
+            return jsonify({
+                'success': True, 
+                'ecuacion': interpolador.obtener_ecuacion_string(),
+                'polinomios_pasos': interpolador.obtener_polinomios_pasos(),
+                'grado': 1
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)})
+
+    elif metodo == "Interpolación Cuadrática":
+        from metodos.interpolacion_cuadratica import InterpolacionCuadratica
+        try:
+            interpolador = InterpolacionCuadratica(x_puntos, y_puntos, cfg=cfg)
+            interpolador.calcular_polinomio()
+            return jsonify({
+                'success': True, 
+                'ecuacion': interpolador.obtener_ecuacion_string(),
+                'polinomios_pasos': interpolador.obtener_polinomios_pasos(),
+                'grado': 2
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)})
+
+    elif metodo == "Regresión Simple":
+        from metodos.regresion_simple import RegresionSimple
+        try:
+            regresion = RegresionSimple(x_puntos, y_puntos, cfg=cfg)
+            regresion.calcular_modelo()
+            
+            return jsonify({
+                'success': True, 
+                'ecuacion': regresion.obtener_ecuacion_string(),
+                'analisis_error': regresion.obtener_resultados_error(),
+                'grado': 1
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)})
+
+    elif metodo == "Regresión Polinomial":
+        from metodos.regresion_polinomial import RegresionPolinomial
+        try:
+            grado_m = int(data.get('grado_m', 2))
+            regresion = RegresionPolinomial(x_puntos, y_puntos, grado_m, cfg=cfg)
+            regresion.calcular_modelo()
+            
+            return jsonify({
+                'success': True, 
+                'ecuacion': regresion.obtener_ecuacion_string(),
+                'analisis_error': regresion.obtener_resultados_error(),
+                'grado': grado_m
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)})
+            
     return jsonify({'error': 'Método no soportado'})
 
 if __name__ == '__main__':

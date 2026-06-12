@@ -19,14 +19,25 @@
                 <label>Método:</label>
                 <select id="metodo-inter" class="input-control" onchange="actualizarNombreMetodoInter()">
                     <option value="Diferencias Divididas">Diferencias Divididas (Newton)</option>
+                    <option value="Lagrange">Lagrange</option>
+                    <option value="Trazadores Cúbicos">Trazadores Cúbicos (Splines)</option>
+                    <option value="Interpolación Lineal">Interpolación Lineal</option>
+                    <option value="Interpolación Cuadrática">Interpolación Cuadrática</option>
+                    <option value="Regresión Simple">Regresión Simple</option>
+                    <option value="Regresión Polinomial">Regresión Polinomial</option>
                 </select>
+            </div>
+            <div class="input-group flex-1" id="grupo-grado-inter" style="display: none;">
+                <label>Grado (m):</label>
+                <input type="number" id="grado-inter" value="2" min="1" max="10" class="input-control text-center">
             </div>
             <div class="input-group flex-1">
                 <label>Tolerancia:</label>
                 <input type="text" id="tol-inter" value="0.001" class="input-control text-center">
             </div>
-            <div class="form-actions mt-4 flex-1">
+            <div class="form-actions mt-4 flex-1" style="display: flex; gap: 10px;">
                 <button class="btn btn-primary" id="btn-calc-inter" onclick="calcularInter()">Calcular</button>
+                <button class="btn btn-secondary" onclick="limpiarInter()">Limpiar</button>
             </div>
         </div>
 
@@ -41,7 +52,7 @@
     <div class="result-panel mt-4 flex-column" id="resultado-inter-container" style="display:none; flex-direction: column !important; gap: 24px;">
         <!-- Tabla Arriba y más grande -->
         <div class="glass-panel w-full" style="padding: 24px;">
-            <label class="section-label" style="font-size: 1.2rem; color: var(--vp-gold);">TABLA DE DIFERENCIAS DIVIDIDAS:</label>
+            <label class="section-label" id="titulo-tabla-inter" style="font-size: 1.2rem; color: var(--vp-gold);">TABLA DE CÁLCULO:</label>
             <div class="table-responsive mt-3">
                 <table id="tabla-inter" class="data-table" style="font-size: 1.1rem;">
                     <thead id="thead-inter"></thead>
@@ -72,20 +83,58 @@
 <script>
 function actualizarNombreMetodoInter() {
     const select = document.getElementById('metodo-inter');
+    const bgTextId = 'bg-method-name';
+    const nInput = document.getElementById('n-inter');
+    
     if (select && typeof animateMethodNameChange === 'function') {
-        const txt = select.options[select.selectedIndex].text.split(' (')[0];
-        animateMethodNameChange('bg-method-name', txt);
+        let txt = select.options[select.selectedIndex].text.split(' (')[0];
+        if (txt === 'Diferencias Divididas') txt = 'Newton';
+        else if (txt === 'Trazadores Cúbicos') txt = 'Splines';
+        animateMethodNameChange(bgTextId, txt);
     } else {
-        const bgText = document.getElementById('bg-method-name');
+        const bgText = document.getElementById(bgTextId);
         if (bgText && select) {
-            bgText.innerText = select.options[select.selectedIndex].text.split(' (')[0];
+            let txt = select.options[select.selectedIndex].text.split(' (')[0];
+            if (txt === 'Diferencias Divididas') txt = 'Newton';
+            else if (txt === 'Trazadores Cúbicos') txt = 'Splines';
+            bgText.innerText = txt;
         }
+    }
+    
+    if (select.value === 'Interpolación Lineal') {
+        nInput.value = 2;
+        nInput.disabled = true;
+        generarCamposInterpolacion();
+    } else if (select.value === 'Interpolación Cuadrática') {
+        nInput.value = 3;
+        nInput.disabled = true;
+        generarCamposInterpolacion();
+    } else {
+        nInput.disabled = false;
+    }
+    
+    // Controlar visibilidad del grado para regresión polinomial
+    const gradoGroup = document.getElementById('grupo-grado-inter');
+    if (select.value === 'Regresión Polinomial') {
+        gradoGroup.style.display = 'flex';
+    } else {
+        gradoGroup.style.display = 'none';
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     actualizarNombreMetodoInter();
 });
+
+function limpiarInter() {
+    document.getElementById('n-inter').value = 3;
+    document.getElementById('n-inter').disabled = false;
+    document.getElementById('metodo-inter').value = 'Diferencias Divididas';
+    actualizarNombreMetodoInter();
+    generarCamposInterpolacion();
+    document.getElementById('resultado-inter-container').style.display = 'none';
+    document.getElementById('resultado-inter').innerHTML = '';
+}
 
 function generarCamposInterpolacion() {
     const n = parseInt(document.getElementById('n-inter').value);
@@ -112,11 +161,13 @@ async function calcularInter() {
         y.push(document.getElementById(`inter-y-${i}`).value);
     }
     
+    const metodoElegido = document.getElementById('metodo-inter').value;
     const payload = { 
         x, 
         y, 
-        metodo: document.getElementById('metodo-inter').value,
+        metodo: metodoElegido,
         tol: document.getElementById('tol-inter').value,
+        grado_m: document.getElementById('grado-inter').value,
         cfg: window.getAdvancedSettings ? window.getAdvancedSettings() : {}
     };
     const data = await performRequest('/api/calcular_interpolacion', payload, 'btn-calc-inter');
@@ -139,25 +190,63 @@ async function calcularInter() {
     let resContainer = document.getElementById('resultado-inter');
     let htmlContent = '';
     
-    if (data.polinomios_pasos && data.polinomios_pasos.length > 0) {
+    if (metodoElegido === "Trazadores Cúbicos") {
+        htmlContent += `<div class="mt-4 w-full"><strong style="color: var(--color-success); font-size: 1.2em; display:block; text-align:center;">Splines Cúbicos Naturales:</strong></div>`;
         data.polinomios_pasos.forEach((expr, idx) => {
-            if (idx === data.polinomios_pasos.length - 1) {
-                htmlContent += `<div class="mt-4 w-full"><strong style="color: var(--color-success); font-size: 1.2em; display:block; text-align:center;">Polinomio Óptimo (Grado ${data.grado}):</strong><div id="katex-optimo"></div></div>`;
-            } else {
-                htmlContent += `<div class="mt-3 w-full" style="opacity: 0.8;"><span style="color: var(--text-secondary); display:block; text-align:center;">Polinomio (Grado ${idx}):</span><div id="katex-paso-${idx}"></div></div>`;
-            }
+            const intv = data.intervalos[idx];
+            htmlContent += `<div class="mt-4 w-full" style="max-width: 100%; overflow-x: auto; padding-bottom: 10px;">
+                <span style="color: var(--vp-gold); display:block; text-align:center; margin-bottom: 12px; font-weight: bold;">Para x ∈ [${intv[0]}, ${intv[1]}]</span>
+                <div id="katex-spline-${idx}" style="min-width: max-content; padding: 0 15px;"></div>
+            </div>`;
         });
         resContainer.innerHTML = htmlContent;
-
-        // Renderizar con KaTeX
+        
         data.polinomios_pasos.forEach((expr, idx) => {
             let latex = sympyToLatex(expr);
-            if (idx === data.polinomios_pasos.length - 1) {
-                katex.render(`P(x) = ${latex}`, document.getElementById('katex-optimo'), {displayMode: true, throwOnError: false});
-            } else {
-                katex.render(`P_{${idx}}(x) = ${latex}`, document.getElementById(`katex-paso-${idx}`), {displayMode: true, throwOnError: false});
-            }
+            katex.render(`S_{${idx}}(x) = ${latex}`, document.getElementById(`katex-spline-${idx}`), {displayMode: true, throwOnError: false});
         });
+    }
+    else if (data.polinomios_pasos && data.polinomios_pasos.length > 0) {
+        if (metodoElegido === "Lagrange" || metodoElegido === "Interpolación Lineal" || metodoElegido === "Interpolación Cuadrática") {
+            data.polinomios_pasos.forEach((paso, idx) => {
+                htmlContent += `<div class="mt-4 w-full" style="max-width: 100%; overflow-x: auto; padding-bottom: 10px;">
+                    <span style="color: var(--vp-gold); display:block; text-align:center; margin-bottom: 12px; font-weight: bold;">Paso ${idx + 1}: ${paso.titulo}</span>
+                    <div id="katex-paso-${idx}" style="min-width: max-content; padding: 0 15px;"></div>
+                </div>`;
+            });
+            resContainer.innerHTML = htmlContent;
+            
+            data.polinomios_pasos.forEach((paso, idx) => {
+                katex.render(paso.ecuacion, document.getElementById(`katex-paso-${idx}`), {displayMode: true, throwOnError: false});
+            });
+        } else {
+            // Newton / Diferencias Divididas
+            data.polinomios_pasos.forEach((expr, idx) => {
+                if (idx === data.polinomios_pasos.length - 1) {
+                    htmlContent += `<div class="mt-4 w-full" style="max-width: 100%; overflow-x: auto; padding-bottom: 10px;">
+                        <strong style="color: var(--color-success); font-size: 1.2em; display:block; text-align:center;">Polinomio Óptimo (Grado ${data.grado}):</strong>
+                        <div id="katex-optimo" style="min-width: max-content; padding: 0 15px;"></div>
+                    </div>`;
+                } else {
+                    htmlContent += `<div class="mt-3 w-full" style="opacity: 0.8; max-width: 100%; overflow-x: auto; padding-bottom: 10px;">
+                        <span style="color: var(--text-secondary); display:block; text-align:center;">Polinomio (Grado ${idx}):</span>
+                        <div id="katex-paso-${idx}" style="min-width: max-content; padding: 0 15px;"></div>
+                    </div>`;
+                }
+            });
+            
+            resContainer.innerHTML = htmlContent;
+
+            // Renderizar con KaTeX
+            data.polinomios_pasos.forEach((expr, idx) => {
+                let latex = sympyToLatex(expr);
+                if (idx === data.polinomios_pasos.length - 1) {
+                    katex.render(`P(x) = ${latex}`, document.getElementById('katex-optimo'), {displayMode: true, throwOnError: false});
+                } else {
+                    katex.render(`P_{${idx}}(x) = ${latex}`, document.getElementById(`katex-paso-${idx}`), {displayMode: true, throwOnError: false});
+                }
+            });
+        }
     } else {
         let latex = sympyToLatex(data.ecuacion);
         resContainer.innerHTML = `<strong style="color: var(--color-success); font-size: 1.2em; display:block; text-align:center;">Polinomio Óptimo (Grado ${data.grado}):</strong><div id="katex-optimo"></div>`;
@@ -171,6 +260,7 @@ async function calcularInter() {
     tbody.innerHTML = '';
     
     if (data.tabla && data.tabla.length > 0) {
+        document.getElementById('titulo-tabla-inter').innerText = 'TABLA DE DIFERENCIAS DIVIDIDAS:';
         let theadHtml = '<tr><th>x_i</th><th>y_i</th>';
         for (let i = 1; i < data.tabla[0].length; i++) {
             theadHtml += `<th>Orden ${i}</th>`;
@@ -181,11 +271,58 @@ async function calcularInter() {
         data.tabla.forEach((row, i) => {
             let trHtml = `<tr><td>${document.getElementById(`inter-x-${i}`).value}</td>`;
             row.forEach((val) => {
-                trHtml += `<td>${val !== "" ? window.formatNumber(val) : ""}</td>`;
+                trHtml += `<td>${val !== "" ? Number(val).toFixed(4) : ""}</td>`;
             });
             trHtml += '</tr>';
             tbody.innerHTML += trHtml;
         });
+    } else if (data.analisis_error) {
+        document.getElementById('titulo-tabla-inter').innerText = 'ANÁLISIS DEL ERROR (REGRESIÓN):';
+        let theadHtml = '<tr><th>X_i</th><th>Y_i</th><th>Ŷ_i (Pronóstico)</th><th>(Ŷ_i - Ȳ)²</th><th>(Y_i - Ŷ_i)²</th></tr>';
+        thead.innerHTML = theadHtml;
+        
+        data.analisis_error.tabla.forEach((row) => {
+            let trHtml = `<tr>
+                <td>${Number(row[0]).toFixed(4)}</td>
+                <td>${Number(row[1]).toFixed(4)}</td>
+                <td style="color: var(--color-success);">${Number(row[2]).toFixed(4)}</td>
+                <td>${Number(row[3]).toFixed(4)}</td>
+                <td>${Number(row[4]).toFixed(4)}</td>
+            </tr>`;
+            tbody.innerHTML += trHtml;
+        });
+        
+        // Agregar métricas R2 y r debajo de la tabla
+        let metricasHtml = `
+            <div class="mt-4 p-4 flex-column" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px;">
+                <h4 style="color: var(--color-success); font-size: 1.1rem; margin-bottom: 12px; text-align: center;">Métricas de Ajuste</h4>
+                <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px;">
+                    <div style="text-align: center;">
+                        <span style="color: var(--text-secondary); display: block; margin-bottom: 5px;">Coeficiente de Correlación (r)</span>
+                        <strong style="color: white; font-size: 1.3rem;">${data.analisis_error.r.toFixed(4)}</strong>
+                    </div>
+                    <div style="text-align: center;">
+                        <span style="color: var(--text-secondary); display: block; margin-bottom: 5px;">Coeficiente de Determinación (R²)</span>
+                        <strong style="color: white; font-size: 1.3rem;">${(data.analisis_error.R2 * 100).toFixed(2)}%</strong>
+                        <span style="color: var(--vp-muted); font-size: 0.9rem; display: block; margin-top: 5px;">(${data.analisis_error.R2.toFixed(4)})</span>
+                    </div>
+                </div>
+            </div>`;
+        
+        // Lo insertaremos antes del bloque de razón de detención
+        let razonContainer = document.getElementById('razon-detencion-container');
+        let oldMetricas = document.getElementById('regresion-metricas');
+        if (oldMetricas) oldMetricas.remove();
+        
+        let mDiv = document.createElement('div');
+        mDiv.id = 'regresion-metricas';
+        mDiv.innerHTML = metricasHtml;
+        razonContainer.parentNode.insertBefore(mDiv, razonContainer);
+    } else {
+        // Limpiar si no es regresión ni tiene tabla
+        let oldMetricas = document.getElementById('regresion-metricas');
+        if (oldMetricas) oldMetricas.remove();
+        document.getElementById('titulo-tabla-inter').innerText = 'TABLA DE CÁLCULO:';
     }
     
     // Mostrar Errores y Razón de Detención
