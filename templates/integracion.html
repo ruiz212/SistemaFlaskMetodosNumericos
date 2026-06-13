@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-container fade-in">
+    <h2 class="page-title">Integración Numérica</h2>
+    
+    <div class="glass-panel form-panel" style="position: relative;">
+        <div id="bg-method-name" style="position: absolute; left: 32px; top: 32px; font-family: 'Outfit', sans-serif; font-size: 4rem; font-weight: 800; color: rgba(245, 158, 11, 0.15); pointer-events: none; user-select: none; z-index: 0; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%;">
+            Regla del Trapecio
+        </div>
+
+        <div class="form-row align-center" style="position: relative; z-index: 1; padding-top: 60px;">
+            <!-- Toggle Simple / Doble -->
+            <div style="display: flex; gap: 10px; width: 100%; margin-bottom: 10px;">
+                <button class="btn btn-primary" id="btn-simple" style="flex: 1; border-radius: 8px;">Integral Simple</button>
+                <button class="btn" id="btn-doble" style="flex: 1; background: var(--bg-input); border-radius: 8px;">Integral Doble</button>
+            </div>
+
+            <form id="integracion-form" style="width: 100%;">
+                <input type="hidden" id="tipo_integral" value="simple">
+                
+                <div class="form-row align-center" style="margin-bottom: 20px;">
+                    <div class="input-group flex-2">
+                        <label for="ecuacion">Función a integrar</label>
+                        <div style="position: relative;">
+                            <i class="ph ph-math-operations" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 18px;"></i>
+                            <input type="text" id="ecuacion" class="input-control" placeholder="Ej: x^2 + 2x" required style="padding-left: 40px; font-size: 16px;">
+                        </div>
+                        <small style="color: var(--text-muted); font-size: 12px; margin-top: 6px; display: block;" id="funcion-hint">
+                            Usa 'x' como variable. Ejemplo: sin(x) + e^x
+                        </small>
+                    </div>
+
+                    <div class="input-group flex-1">
+                        <label for="metodo">Método de Integración</label>
+                        <select id="metodo" class="input-control" required>
+                            <option value="Trapecio" selected>Regla del Trapecio</option>
+                            <option value="Romberg">Romberg</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Límites X -->
+                <h3 style="font-size: 14px; color: var(--accent-primary); margin-bottom: 12px; font-weight: 600;" id="label-limites-x">Límites de Integración</h3>
+                <div class="form-row" style="margin-bottom: 20px;">
+                    <div class="input-group flex-1">
+                        <label for="a_val">Límite inferior (a)</label>
+                        <input type="number" id="a_val" step="any" class="input-control" placeholder="0" required>
+                    </div>
+                    <div class="input-group flex-1">
+                        <label for="b_val">Límite superior (b)</label>
+                        <input type="number" id="b_val" step="any" class="input-control" placeholder="1" required>
+                    </div>
+                    <div class="input-group flex-1">
+                        <label for="n_val" id="label-n-x">Subdivisiones (n)</label>
+                        <input type="number" id="n_val" step="1" min="1" class="input-control" value="1" required>
+                    </div>
+                </div>
+
+                <!-- Límites Y (Doble Integral) -->
+                <div id="seccion-doble" style="display: none;">
+                    <h3 style="font-size: 14px; color: var(--accent-secondary); margin-bottom: 12px; font-weight: 600;">Límites de Integración Y</h3>
+                    <div class="form-row" style="margin-bottom: 24px;">
+                        <div class="input-group flex-1">
+                            <label for="c_val">Límite inferior (c)</label>
+                            <input type="number" id="c_val" step="any" class="input-control" placeholder="0">
+                        </div>
+                        <div class="input-group flex-1">
+                            <label for="d_val">Límite superior (d)</label>
+                            <input type="number" id="d_val" step="any" class="input-control" placeholder="1">
+                        </div>
+                        <div class="input-group flex-1">
+                            <label for="m_val">Subdivisiones (ny)</label>
+                            <input type="number" id="m_val" step="1" min="1" class="input-control" value="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions mt-4 flex-1" style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary" id="btn-calcular">Calcular</button>
+                    <button type="button" class="btn btn-secondary" id="btn-limpiar">Limpiar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Panel de Resultados -->
+    <div class="result-panel mt-4 flex-column" id="resultado-integracion-container" style="display:none; flex-direction: column !important; gap: 24px;">
+        <div class="glass-panel w-full" style="padding: 24px;">
+            <div id="tabla-container" style="display: none;">
+                <label class="section-label" style="font-size: 1.2rem; color: var(--vp-gold);">PUNTOS EVALUADOS:</label>
+                <div class="table-responsive mt-3">
+                    <table class="data-table" style="font-size: 1.1rem;">
+                        <thead>
+                            <tr>
+                                <th>i</th>
+                                <th>x_i</th>
+                                <th>f(x_i)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-integracion"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div style="flex: 1; display: flex; flex-direction: column; margin-top: 24px;">
+                <label style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px;">Procedimiento Paso a Paso</label>
+                <textarea id="consola-salida" class="console-output flex-1" readonly></textarea>
+            </div>
+        </div>
+
+        <div id="resultado-final" class="resultado-tarjeta success" style="flex-direction: column; align-items: flex-start; width: 100%;">
+            <!-- Final result shown here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/integracion.js') }}"></script>
+{% endblock %}

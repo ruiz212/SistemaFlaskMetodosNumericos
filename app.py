@@ -57,6 +57,63 @@ def iterativos():
 def interpolacion():
     return render_template('interpolacion.html')
 
+@app.route('/integracion')
+def integracion():
+    return render_template('integracion.html')
+
+
+# =========================================================================
+# API: INTEGRACIÓN NUMÉRICA
+# =========================================================================
+from metodos.integracion import integrar, integrar_doble
+
+@app.route('/api/calcular_integracion', methods=['POST'])
+def calcular_integracion():
+    data = request.json
+    ecuacion = data.get('ecuacion', '').strip()
+    metodo = data.get('metodo')
+    tipo = data.get('tipo', 'simple')
+    
+    if not ecuacion:
+        return jsonify({'error': 'Ingresa una ecuación.'})
+        
+    try:
+        a = float(data.get('a', 0))
+        b = float(data.get('b', 1))
+        n = int(data.get('n', 1))
+        
+        if tipo == 'doble':
+            c = float(data.get('c', 0))
+            d = float(data.get('d', 1))
+            m = int(data.get('m', 1))
+            
+            # Para integral doble se compila con variables x e y
+            exito, msg, vars_sym, _, _, funcion_eval, _ = compilar_funciones(ecuacion, 'rad', variables_permitidas=('x', 'y'))
+            if not exito:
+                return jsonify({'error': f"Error en sintaxis: {msg}"})
+                
+            res = integrar_doble(metodo, a, b, n, c, d, m, funcion_eval)
+        else:
+            # Para integral simple, compilar solo con x
+            exito, msg, x_sym, _, _, funcion_eval, _ = compilar_funciones(ecuacion, 'rad', variables_permitidas=('x',))
+            if not exito:
+                # Intento fallback si pusieron 'y' por error o algo, pero normalmente se quejará
+                return jsonify({'error': f"Error en sintaxis: {msg}"})
+                
+            res = integrar(metodo, a, b, n, funcion_eval, is_double=False)
+            
+        if "error" in res:
+            return jsonify({'error': res["error"]})
+            
+        return jsonify({
+            'success': True,
+            'integral': res["integral"],
+            'pasos': "\n".join(res["pasos"])
+        })
+    except ValueError as e:
+        return jsonify({'error': str(e)})
+    except Exception as e:
+        return jsonify({'error': f"Error inesperado: {str(e)}"})
 
 # =========================================================================
 # API: ECUACIONES NO LINEALES

@@ -43,11 +43,18 @@ def _locals_sympify():
 
 def parse_ecuacion(ecuacion_texto, modo_angulo='rad'):
     texto = normalizar_ecuacion(ecuacion_texto)
-    expr_simbolica = sp.sympify(texto, locals=_locals_sympify())
+    # Soporte para y mayúscula
+    texto = re.sub(r'(?<![A-Za-z_])Y(?![A-Za-z_0-9])', 'y', texto)
+    
+    local_dict = _locals_sympify()
+    local_dict['y'] = sp.Symbol('y')
+    local_dict['Y'] = sp.Symbol('y')
+    
+    expr_simbolica = sp.sympify(texto, locals=local_dict)
 
     if isinstance(expr_simbolica, sp.core.relational.Relational):
         raise ValueError(
-            "La expresión contiene un operador relacional. Ingresa solo f(x)."
+            "La expresión contiene un operador relacional. Ingresa solo la función."
         )
 
     if modo_angulo == 'deg':
@@ -59,48 +66,59 @@ def parse_ecuacion(ecuacion_texto, modo_angulo='rad'):
 
 
 @lru_cache(maxsize=64)
-def get_cached_compilation(ecuacion_texto, modo_angulo):
-    """Caché para evitar recompilar la misma ecuación múltiples veces."""
-    return compilar_funciones_base(ecuacion_texto, modo_angulo)
+def get_cached_compilation(ecuacion_texto, modo_angulo, variables_permitidas=('x',)):
+    return compilar_funciones_base(ecuacion_texto, modo_angulo, variables_permitidas)
 
 
-def compilar_funciones(ecuacion_texto, modo_angulo='rad'):
-    """Wrapper con caché."""
-    return get_cached_compilation(ecuacion_texto, modo_angulo)
+def compilar_funciones(ecuacion_texto, modo_angulo='rad', variables_permitidas=('x',)):
+    return get_cached_compilation(ecuacion_texto, modo_angulo, variables_permitidas)
 
 
-def compilar_funciones_base(ecuacion_texto, modo_angulo='rad'):
-    """Lógica real de compilación."""
+def compilar_funciones_base(ecuacion_texto, modo_angulo='rad', variables_permitidas=('x',)):
     try:
-        x_sym = _x
         expr_simbolica = parse_ecuacion(ecuacion_texto, modo_angulo)
+        
+        simbolos_permitidos = set(sp.Symbol(v) for v in variables_permitidas)
 
-        vars_libres = expr_simbolica.free_symbols - {x_sym}
+        vars_libres = expr_simbolica.free_symbols - simbolos_permitidos
         if vars_libres:
             nombres = ', '.join(sorted(str(v) for v in vars_libres))
             raise ValueError(f"Variable(s) desconocida(s): {nombres}")
 
-        derivada_simbolica = sp.diff(expr_simbolica, x_sym)
-
-        # 'numpy' handles real and complex numbers robustly
-        funcion_eval  = sp.lambdify(x_sym, expr_simbolica,  'numpy')
-        derivada_eval = sp.lambdify(x_sym, derivada_simbolica, 'numpy')
-
-        return True, "Éxito", x_sym, expr_simbolica, derivada_simbolica, funcion_eval, derivada_eval
+        if len(variables_permitidas) == 1:
+            x_sym = sp.Symbol(variables_permitidas[0])
+            derivada_simbolica = sp.diff(expr_simbolica, x_sym)
+            funcion_eval  = sp.lambdify(x_sym, expr_simbolica,  'numpy')
+            derivada_eval = sp.lambdify(x_sym, derivada_simbolica, 'numpy')
+            return True, "Éxito", x_sym, expr_simbolica, derivada_simbolica, funcion_eval, derivada_eval
+        else:
+            # Para integrales dobles o múltiples variables
+            simbolos_tupla = tuple(sp.Symbol(v) for v in variables_permitidas)
+            funcion_eval = sp.lambdify(simbolos_tupla, expr_simbolica, 'numpy')
+            return True, "Éxito", simbolos_tupla, expr_simbolica, None, funcion_eval, None
+            
     except Exception as e:
         return False, str(e), None, None, None, None, None
 
 
 def evaluar_f(val, expr_simbolica, x_sym, funcion_eval):
     try:
-        res = funcion_eval(val)
+        # Soporte para múltiples variables
+        if isinstance(val, (list, tuple)) and isinstance(x_sym, tuple):
+            res = funcion_eval(*val)
+        else:
+            res = funcion_eval(val)
+            
         if res is None or not np.isfinite(res).all():
             raise ValueError("Resultado no finito")
         return res
     except Exception:
         try:
-            # Fallback a SymPy (más lento pero más robusto con precision variable)
-            res = expr_simbolica.evalf(subs={x_sym: val})
+            if isinstance(val, (list, tuple)) and isinstance(x_sym, tuple):
+                subs_dict = {sym: v for sym, v in zip(x_sym, val)}
+                res = expr_simbolica.evalf(subs=subs_dict)
+            else:
+                res = expr_simbolica.evalf(subs={x_sym: val})
             return complex(res) if res.is_complex else float(res)
         except Exception:
             return None
