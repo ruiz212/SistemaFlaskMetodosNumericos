@@ -21,6 +21,10 @@ from metodos.despejes import despejar_ecuacion
 
 app = Flask(__name__)
 
+# Registrar el Blueprint de la Aplicación IoT
+from aplicacion import aplicacion_bp
+app.register_blueprint(aplicacion_bp, url_prefix='/aplicacion')
+
 # =========================================================================
 # RUTAS DE VISTAS (PÁGINAS)
 # =========================================================================
@@ -628,36 +632,7 @@ def calcular_interpolacion():
         except Exception as e:
             return jsonify({'error': str(e)})
 
-    elif metodo == "Regresión Simple":
-        from metodos.regresion_simple import RegresionSimple
-        try:
-            regresion = RegresionSimple(x_puntos, y_puntos, cfg=cfg)
-            regresion.calcular_modelo()
-            
-            return jsonify({
-                'success': True, 
-                'ecuacion': regresion.obtener_ecuacion_string(),
-                'analisis_error': regresion.obtener_resultados_error(),
-                'grado': 1
-            })
-        except Exception as e:
-            return jsonify({'error': str(e)})
 
-    elif metodo == "Regresión Polinomial":
-        from metodos.regresion_polinomial import RegresionPolinomial
-        try:
-            grado_m = int(data.get('grado_m', 2))
-            regresion = RegresionPolinomial(x_puntos, y_puntos, grado_m, cfg=cfg)
-            regresion.calcular_modelo()
-            
-            return jsonify({
-                'success': True, 
-                'ecuacion': regresion.obtener_ecuacion_string(),
-                'analisis_error': regresion.obtener_resultados_error(),
-                'grado': grado_m
-            })
-        except Exception as e:
-            return jsonify({'error': str(e)})
             
     return jsonify({'error': 'Método no soportado'})
 

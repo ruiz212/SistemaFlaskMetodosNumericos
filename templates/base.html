@@ -82,6 +82,9 @@
                 <a href="{{ url_for('integracion') }}" class="nav-item page-link {% if request.path == '/integracion' %}active{% endif %}">
                     <i class="ph ph-integral"></i> <span>Integración</span>
                 </a>
+                <a href="{{ url_for('aplicacion.panel_solar') }}" class="nav-item page-link {% if request.path.startswith('/aplicacion') %}active{% endif %}" style="color: #f59e0b;">
+                    <i class="ph ph-sun"></i> <span style="font-weight: bold;">Aplicación IoT</span>
+                </a>
             </nav>
 
             <div class="topbar-actions">

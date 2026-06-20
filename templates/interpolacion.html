@@ -23,14 +23,10 @@
                     <option value="Trazadores Cúbicos">Trazadores Cúbicos (Splines)</option>
                     <option value="Interpolación Lineal">Interpolación Lineal</option>
                     <option value="Interpolación Cuadrática">Interpolación Cuadrática</option>
-                    <option value="Regresión Simple">Regresión Simple</option>
-                    <option value="Regresión Polinomial">Regresión Polinomial</option>
+
                 </select>
             </div>
-            <div class="input-group flex-1" id="grupo-grado-inter" style="display: none;">
-                <label>Grado (m):</label>
-                <input type="number" id="grado-inter" value="2" min="1" max="10" class="input-control text-center">
-            </div>
+
             <div class="input-group flex-1">
                 <label>Tolerancia:</label>
                 <input type="text" id="tol-inter" value="0.001" class="input-control text-center">
@@ -113,13 +109,7 @@ function actualizarNombreMetodoInter() {
         nInput.disabled = false;
     }
     
-    // Controlar visibilidad del grado para regresión polinomial
-    const gradoGroup = document.getElementById('grupo-grado-inter');
-    if (select.value === 'Regresión Polinomial') {
-        gradoGroup.style.display = 'flex';
-    } else {
-        gradoGroup.style.display = 'none';
-    }
+
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -167,7 +157,6 @@ async function calcularInter() {
         y, 
         metodo: metodoElegido,
         tol: document.getElementById('tol-inter').value,
-        grado_m: document.getElementById('grado-inter').value,
         cfg: window.getAdvancedSettings ? window.getAdvancedSettings() : {}
     };
     const data = await performRequest('/api/calcular_interpolacion', payload, 'btn-calc-inter');
@@ -276,52 +265,7 @@ async function calcularInter() {
             trHtml += '</tr>';
             tbody.innerHTML += trHtml;
         });
-    } else if (data.analisis_error) {
-        document.getElementById('titulo-tabla-inter').innerText = 'ANÁLISIS DEL ERROR (REGRESIÓN):';
-        let theadHtml = '<tr><th>X_i</th><th>Y_i</th><th>Ŷ_i (Pronóstico)</th><th>(Ŷ_i - Ȳ)²</th><th>(Y_i - Ŷ_i)²</th></tr>';
-        thead.innerHTML = theadHtml;
-        
-        data.analisis_error.tabla.forEach((row) => {
-            let trHtml = `<tr>
-                <td>${Number(row[0]).toFixed(4)}</td>
-                <td>${Number(row[1]).toFixed(4)}</td>
-                <td style="color: var(--color-success);">${Number(row[2]).toFixed(4)}</td>
-                <td>${Number(row[3]).toFixed(4)}</td>
-                <td>${Number(row[4]).toFixed(4)}</td>
-            </tr>`;
-            tbody.innerHTML += trHtml;
-        });
-        
-        // Agregar métricas R2 y r debajo de la tabla
-        let metricasHtml = `
-            <div class="mt-4 p-4 flex-column" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px;">
-                <h4 style="color: var(--color-success); font-size: 1.1rem; margin-bottom: 12px; text-align: center;">Métricas de Ajuste</h4>
-                <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px;">
-                    <div style="text-align: center;">
-                        <span style="color: var(--text-secondary); display: block; margin-bottom: 5px;">Coeficiente de Correlación (r)</span>
-                        <strong style="color: white; font-size: 1.3rem;">${data.analisis_error.r.toFixed(4)}</strong>
-                    </div>
-                    <div style="text-align: center;">
-                        <span style="color: var(--text-secondary); display: block; margin-bottom: 5px;">Coeficiente de Determinación (R²)</span>
-                        <strong style="color: white; font-size: 1.3rem;">${(data.analisis_error.R2 * 100).toFixed(2)}%</strong>
-                        <span style="color: var(--vp-muted); font-size: 0.9rem; display: block; margin-top: 5px;">(${data.analisis_error.R2.toFixed(4)})</span>
-                    </div>
-                </div>
-            </div>`;
-        
-        // Lo insertaremos antes del bloque de razón de detención
-        let razonContainer = document.getElementById('razon-detencion-container');
-        let oldMetricas = document.getElementById('regresion-metricas');
-        if (oldMetricas) oldMetricas.remove();
-        
-        let mDiv = document.createElement('div');
-        mDiv.id = 'regresion-metricas';
-        mDiv.innerHTML = metricasHtml;
-        razonContainer.parentNode.insertBefore(mDiv, razonContainer);
     } else {
-        // Limpiar si no es regresión ni tiene tabla
-        let oldMetricas = document.getElementById('regresion-metricas');
-        if (oldMetricas) oldMetricas.remove();
         document.getElementById('titulo-tabla-inter').innerText = 'TABLA DE CÁLCULO:';
     }
     

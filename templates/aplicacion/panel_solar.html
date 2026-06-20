@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<!-- Premium CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/panel_solar.css') }}">
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="panel-solar-app">
+    <!-- Orbs decorativos flotantes -->
+    <div class="ps-orb ps-orb--gold"></div>
+    <div class="ps-orb ps-orb--violet"></div>
+    <div class="ps-orb ps-orb--cyan"></div>
+
+    <!-- ═══════════════════ HERO HEADER ═══════════════════ -->
+    <div class="ps-hero">
+        <div class="ps-hero__bg-text">Solar IoT</div>
+        <h2 class="ps-hero__title page-title">
+            <i class="ph-fill ph-sun"></i> Panel Solar Inteligente
+        </h2>
+        <p class="ps-hero__subtitle">
+            Calcula el ángulo de inclinación óptimo y la proyección energética diaria
+            integrando datos meteorológicos reales vía satélite con métodos numéricos.
+        </p>
+        <!-- Status Bar -->
+        <div class="ps-status-bar">
+            <div class="ps-status-item">
+                <span class="ps-led ps-led--idle" id="led-ubicacion"></span>
+                <span>Ubicación</span>
+            </div>
+            <div class="ps-status-item">
+                <span class="ps-led ps-led--idle" id="led-api"></span>
+                <span>API Clima</span>
+            </div>
+            <div class="ps-status-item">
+                <span class="ps-led ps-led--idle" id="led-calculo"></span>
+                <span>Motor Numérico</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ DASHBOARD 2 COLUMNAS ═══════════════════ -->
+    <div class="ps-dashboard">
+
+        <!-- ─── COLUMNA IZQUIERDA: MAPA ─── -->
+        <div class="ps-card ps-card--left" id="panel-mapa">
+            <div class="ps-card__header">
+                <div class="ps-card__header-icon">
+                    <i class="ph-bold ph-map-pin"></i>
+                </div>
+                Ubicación Geográfica
+            </div>
+            <p class="ps-card__desc">
+                Haz clic en el mapa para anclar las coordenadas. El sistema extraerá la irradiancia solar
+                de esa latitud en tiempo real.
+            </p>
+
+            <!-- Mapa con overlay de coordenadas -->
+            <div class="ps-map-wrapper">
+                <div id="map" class="ps-map"></div>
+                <button class="ps-btn-location" id="btn-ubicacion" title="Ir a mi ubicación actual" onclick="irUbicacionActual()">
+                    <i class="ph-bold ph-navigation-arrow"></i>
+                </button>
+                <div class="ps-coords-overlay">
+                    <div class="ps-coord-chip">
+                        <span class="ps-coord-chip__label">Lat</span>
+                        <span class="ps-coord-chip__value" id="lat-val">0.0000°</span>
+                    </div>
+                    <div class="ps-coord-chip">
+                        <span class="ps-coord-chip__label">Lon</span>
+                        <span class="ps-coord-chip__value" id="lon-val">0.0000°</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selector de Hardware (Pérdidas Térmicas) -->
+            <div class="ps-hardware-selector">
+                <label for="panel-coef"><i class="ph-bold ph-thermometer-hot"></i> Hardware a Simular (Coef. Temperatura)</label>
+                <select id="panel-coef" class="ps-select">
+                    <option value="-0.29">SunPower Maxeon 6 (Premium) | -0.29 % / °C</option>
+                    <option value="-0.35">Canadian Solar HiKu (Comercial) | -0.35 % / °C</option>
+                    <option value="-0.45" selected>Panel Genérico (Económico) | -0.45 % / °C</option>
+                    <option value="-0.25">First Solar (Película Fina) | -0.25 % / °C</option>
+                </select>
+            </div>
+
+            <!-- Botón de acción -->
+            <button class="ps-btn-action ps-btn-action--idle" id="btn-simular" disabled>
+                <i class="ph-bold ph-cpu"></i>
+                <span id="btn-simular-text">Inicializar Motor Numérico</span>
+            </button>
+        </div>
+
+        <!-- ─── COLUMNA DERECHA: MÉTRICAS Y GRÁFICA ─── -->
+        <div class="ps-card ps-card--right" id="panel-resultados">
+            <div class="ps-card__header">
+                <div class="ps-card__header-icon">
+                    <i class="ph-bold ph-chart-line-up"></i>
+                </div>
+                Análisis y Resultados
+            </div>
+
+            <!-- Grid de Métricas -->
+            <div class="ps-metrics">
+                <!-- Ángulo Óptimo (Newton-Raphson) -->
+                <div class="ps-metric ps-metric--gold" id="metric-angulo">
+                    <div class="ps-metric__icon">
+                        <i class="ph-fill ph-compass-tool"></i>
+                    </div>
+                    <div class="ps-metric__label">Ángulo Óptimo (Inclinación)</div>
+                    <div class="ps-metric__value" id="res-angulo">
+                        <span class="ps-waiting-badge">Esperando simulación</span>
+                    </div>
+                    <div class="ps-metric__method">Optimizado con Newton-Raphson</div>
+                </div>
+
+                <!-- Energía Total (Integración) -->
+                <div class="ps-metric ps-metric--emerald" id="metric-energia">
+                    <div class="ps-metric__icon">
+                        <i class="ph-fill ph-lightning"></i>
+                    </div>
+                    <div class="ps-metric__label">Energía Total (24 Hrs)</div>
+                    <div class="ps-metric__value" id="res-energia">
+                        <span class="ps-waiting-badge">Esperando simulación</span>
+                    </div>
+                    <div class="ps-metric__method">Área bajo la curva (Integración Trapecio)</div>
+                </div>
+
+                <!-- Endpoint IoT -->
+                <div class="ps-iot-card" id="iot-card" onclick="copiarEndpointIoT()" title="Haz clic para copiar el enlace">
+                    <div class="ps-iot-card__icon">
+                        <i class="ph-fill ph-cpu"></i>
+                    </div>
+                    <div class="ps-iot-card__body">
+                        <div class="ps-iot-card__label">📡 Endpoint para Hardware (ESP32 / Arduino)</div>
+                        <div class="ps-iot-card__endpoint">
+                            <span class="ps-iot-card__prompt">>_</span>
+                            <span id="iot-endpoint">Selecciona una ubicación en el mapa...</span>
+                        </div>
+                    </div>
+                    <i class="ph-bold ph-copy ps-iot-card__copy-icon"></i>
+                </div>
+            </div>
+
+            <!-- Gráfica de Radiación Solar -->
+            <div class="ps-chart-header">
+                <i class="ph-bold ph-sun-horizon"></i>
+                Curva de Irradiancia Diaria
+            </div>
+            <div class="ps-chart-wrapper" id="chart-container">
+                <div class="ps-chart-empty" id="chart-empty-state">
+                    <i class="ph ph-chart-line"></i>
+                    <span>La gráfica aparecerá aquí tras la simulación</span>
+                </div>
+                <canvas id="solarChart" style="display: none;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ GEMELO DIGITAL 3D ═══════════════════ -->
+    <div class="ps-card ps-card--3d" id="panel-3d-container">
+        <div class="ps-card__header">
+            <div class="ps-card__header-icon" style="color: #06b6d4;">
+                <i class="ph-bold ph-cube"></i>
+            </div>
+            Gemelo Digital 3D (Prueba Física)
+        </div>
+        <div class="ps-3d-wrapper">
+            <div id="solar-3d-canvas"></div>
+            <div class="ps-3d-overlay">
+                <span class="ps-3d-badge">Inclinación Virtual: <span id="badge-angulo">0.00°</span></span>
+                <p>Interactúa rotando la cámara con el mouse.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ SECCIÓN DE METODOLOGÍA ═══════════════════ -->
+    <div class="ps-methodology">
+        <div class="ps-methodology__title">
+            <i class="ph-bold ph-book-open-text"></i>
+            Métodos Numéricos Aplicados
+        </div>
+        <div class="ps-methodology__grid">
+            <!-- Newton-Raphson -->
+            <div class="ps-method-card ps-method-card--nr">
+                <div class="ps-method-card__icon">
+                    <i class="ph-fill ph-compass-tool"></i>
+                </div>
+                <div class="ps-method-card__title">Newton-Raphson</div>
+                <p class="ps-method-card__desc">
+                    Se modela la energía como función del ángulo de inclinación.
+                    La derivada se iguala a cero y Newton-Raphson encuentra el ángulo
+                    que maximiza la captación solar.
+                </p>
+            </div>
+
+            <!-- Regla del Trapecio -->
+            <div class="ps-method-card ps-method-card--trap">
+                <div class="ps-method-card__icon">
+                    <i class="ph-fill ph-lightning"></i>
+                </div>
+                <div class="ps-method-card__title">Integración Numérica</div>
+                <p class="ps-method-card__desc">
+                    La energía total se calcula integrando la curva de irradiancia
+                    solar a lo largo de las 24 horas usando la regla del trapecio
+                    sobre los datos satelitales horarios.
+                </p>
+            </div>
+
+            <!-- API Satelital -->
+            <div class="ps-method-card ps-method-card--api">
+                <div class="ps-method-card__icon">
+                    <i class="ph-fill ph-satellite"></i>
+                </div>
+                <div class="ps-method-card__title">Datos Satelitales</div>
+                <p class="ps-method-card__desc">
+                    Los datos de radiación directa y temperatura provienen de la
+                    API abierta Open-Meteo, que proporciona información meteorológica
+                    precisa sin requerir autenticación.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Toast Container -->
+<div class="ps-toast-container" id="toast-container"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- Three.js para Gemelo Digital 3D -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="{{ url_for('static', filename='js/solar_3d.js') }}"></script>
+<script src="{{ url_for('static', filename='js/panel_solar.js') }}"></script>
+{% endblock %}
