@@ -31,6 +31,10 @@ function iniciarTutorial() {
         path.includes('polinomios')         ? stepsPolinomios() :
         path.includes('sistemas-lineales')  ? stepsSistemasLineales() :
         path.includes('sistemas')           ? stepsSistemas()   :
+        path.includes('iterativos')         ? stepsIterativos() :
+        path.includes('interpolacion')      ? stepsInterpolacion() :
+        path.includes('integracion')        ? stepsIntegracion() :
+        path.includes('aplicacion')         ? stepsAplicacion() :
         stepsGenerico();
 
     driver({ ...DRIVER_CONFIG, steps }).drive();
@@ -455,6 +459,190 @@ function stepsSistemasLineales() {
                 side: 'top'
             }
         },
+    ];
+}
+
+// ─── ITERATIVOS (SISTEMAS LINEALES) ──────────────────────────────────────────
+function stepsIterativos() {
+    return [
+        {
+            popover: {
+                title: 'Métodos Iterativos',
+                description: 'Resuelve sistemas lineales Ax=b mediante aproximaciones sucesivas (Jacobi y Gauss-Seidel).',
+            }
+        },
+        {
+            element: '#metodo-lin',
+            popover: {
+                title: 'Método Iterativo',
+                description: 'Selecciona Jacobi o Gauss-Seidel. Gauss-Seidel usa los valores calculados inmediatamente, lo que suele hacer que converja más rápido.',
+                side: 'bottom'
+            }
+        },
+        {
+            element: '#matrix-container',
+            popover: {
+                title: 'Matriz A y Vector b',
+                description: 'Ingresa los coeficientes. Recuerda que para asegurar la convergencia, la matriz A debe ser preferiblemente diagonalmente dominante.',
+                side: 'top'
+            }
+        },
+        {
+            element: '#vector-inicial-container',
+            popover: {
+                title: 'Vector Inicial (x0)',
+                description: 'El vector donde inicia la iteración. Generalmente se rellena con ceros, pero puedes poner otros valores si estás cerca de la solución.',
+                side: 'top'
+            }
+        },
+        {
+            element: '.form-actions',
+            popover: {
+                title: 'Calcular',
+                description: 'Ejecuta el método iterativo. El proceso se detendrá al alcanzar la tolerancia o el máximo de iteraciones.',
+                side: 'top'
+            }
+        }
+    ];
+}
+
+// ─── INTERPOLACIÓN ────────────────────────────────────────────────────────────
+function stepsInterpolacion() {
+    return [
+        {
+            popover: {
+                title: 'Interpolación Numérica',
+                description: 'Ajusta una curva que pase exactamente por un conjunto de puntos (X, Y) para estimar valores intermedios.',
+            }
+        },
+        {
+            element: '#metodo-int',
+            popover: {
+                title: 'Método de Interpolación',
+                description: 'Selecciona Newton (Diferencias Divididas) o Lagrange. Ambos matemáticamente llegan al mismo polinomio, pero usan algoritmos distintos.',
+                side: 'bottom'
+            }
+        },
+        {
+            element: '#puntos-container',
+            popover: {
+                title: 'Puntos de Datos',
+                description: 'Ingresa los valores de X y Y. Puedes agregar más puntos cambiando el número de datos arriba.',
+                side: 'top'
+            }
+        },
+        {
+            element: '#x-eval',
+            popover: {
+                title: 'Valor a evaluar (Opcional)',
+                description: 'Ingresa un valor específico de X para calcular cuánto valdría Y en esa posición de la curva interpolada.',
+                side: 'top'
+            }
+        },
+        {
+            element: '.form-actions',
+            popover: {
+                title: 'Calcular',
+                description: 'Calcula el polinomio interpolador y te muestra su gráfica pasando por todos los puntos.',
+                side: 'top'
+            }
+        }
+    ];
+}
+
+// ─── INTEGRACIÓN NUMÉRICA ─────────────────────────────────────────────────────
+function stepsIntegracion() {
+    return [
+        {
+            popover: {
+                title: 'Integración Numérica',
+                description: 'Calcula el área bajo la curva de una función o resuelve integrales dobles usando métodos numéricos.',
+            }
+        },
+        {
+            element: '#ecuacion',
+            popover: {
+                title: 'Función a Integrar',
+                description: 'Escribe la función matemática f(x) que deseas integrar. Usa sintaxis de Python (ej. sin(x) + e**x).',
+                side: 'bottom'
+            }
+        },
+        {
+            element: '#metodo',
+            popover: {
+                title: 'Método',
+                description: 'Trapecio aproxima el área usando trapecios. Romberg utiliza la extrapolación de Richardson para obtener resultados mucho más precisos.',
+                side: 'bottom'
+            }
+        },
+        {
+            element: '#a_val',
+            popover: {
+                title: 'Límites',
+                description: 'Establece el rango desde dónde hasta dónde quieres calcular el área bajo la curva.',
+                side: 'top'
+            }
+        },
+        {
+            element: '.form-actions',
+            popover: {
+                title: 'Calcular',
+                description: 'Resuelve la integral definida numéricamente y muestra el proceso iterativo y la sumatoria final.',
+                side: 'top'
+            }
+        }
+    ];
+}
+
+// ─── APLICACIÓN IOT (PANEL SOLAR) ─────────────────────────────────────────────
+function stepsAplicacion() {
+    return [
+        {
+            popover: {
+                title: 'Simulador de Panel Solar',
+                description: 'Aplica los métodos numéricos en un caso real: Optimizando la energía de un panel solar usando datos satelitales.',
+            }
+        },
+        {
+            element: '#map',
+            popover: {
+                title: 'Ubicación Geográfica',
+                description: 'Haz clic en cualquier parte del mapa. Esto obtendrá los datos de irradiancia solar y temperatura de ese punto desde la API de Open-Meteo.',
+                side: 'right'
+            }
+        },
+        {
+            element: '#panel-coef',
+            popover: {
+                title: 'Hardware Termodinámico',
+                description: 'Diferentes paneles pierden distinta cantidad de energía por el calor. Selecciona el hardware a simular.',
+                side: 'bottom'
+            }
+        },
+        {
+            element: '#btn-simular',
+            popover: {
+                title: 'Motor Numérico',
+                description: 'Al ejecutar, el backend usa Newton-Raphson para hallar el ángulo óptimo y la Regla del Trapecio para integrar el total de energía diaria.',
+                side: 'bottom'
+            }
+        },
+        {
+            element: '#panel-resultados',
+            popover: {
+                title: 'Resultados y Gráfica Dual',
+                description: 'Muestra los resultados matemáticos calculados y dibuja la gráfica comparando la energía ideal (STC) con la real afectada por el calor.',
+                side: 'left'
+            }
+        },
+        {
+            element: '#panel-3d-container',
+            popover: {
+                title: 'Gemelo Digital 3D',
+                description: 'Visualiza la inclinación exacta que calculó el método de Newton-Raphson aplicada a un modelo 3D del panel. Puedes rotar la escena con el mouse.',
+                side: 'left'
+            }
+        }
     ];
 }
 
