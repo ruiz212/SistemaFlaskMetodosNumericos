@@ -25,6 +25,12 @@ def calcular_angulo_optimo(latitud, max_radiacion):
     ci = lat_rad
     tol = 0.001
     
+    if max_radiacion <= 0:
+        return {
+            "angulo": 0.0,
+            "pasos": [{"iter": 1, "ci": ci, "fci": 0, "dfci": 0, "cimas1": 0, "error": 0}]
+        }
+        
     # Buscamos la raíz de f_prima usando Newton-Raphson
     res = newton_raphson(ci, tol, f_prima, f_biprima)
     

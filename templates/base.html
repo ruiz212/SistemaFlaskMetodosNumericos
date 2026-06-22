@@ -82,8 +82,11 @@
                 <a href="{{ url_for('integracion') }}" class="nav-item page-link {% if request.path == '/integracion' %}active{% endif %}">
                     <i class="ph ph-integral"></i> <span>Integración</span>
                 </a>
-                <a href="{{ url_for('aplicacion.panel_solar') }}" class="nav-item page-link {% if request.path.startswith('/aplicacion') %}active{% endif %}" style="color: #f59e0b;">
-                    <i class="ph ph-sun"></i> <span style="font-weight: bold;">Aplicación IoT</span>
+                <a href="{{ url_for('aplicacion.panel_solar') }}" class="nav-item page-link {% if request.path == '/aplicacion/panel_solar' %}active{% endif %}" style="color: #f59e0b;">
+                    <i class="ph ph-sun"></i> <span style="font-weight: bold;">Solar IoT</span>
+                </a>
+                <a href="{{ url_for('aplicacion.drones') }}" class="nav-item page-link {% if request.path == '/aplicacion/drones' %}active{% endif %}" style="color: #10b981;">
+                    <i class="ph ph-airplane-tilt"></i> <span style="font-weight: bold;">Aero-AI</span>
                 </a>
             </nav>
 

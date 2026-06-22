@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block styles %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<!-- Premium CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/drones.css') }}">
+<!-- Chart.js para telemetría -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="drones-app">
+    <!-- Orbs decorativos -->
+    <div class="dr-orb dr-orb--cyan"></div>
+    <div class="dr-orb dr-orb--green"></div>
+
+    <!-- ═══════════════════ HERO HEADER ═══════════════════ -->
+    <div class="dr-hero">
+        <div class="dr-hero__bg-text">AERO-AI</div>
+        <h2 class="dr-hero__title page-title">
+            <i class="ph-fill ph-airplane-tilt"></i> Vuelo Autónomo Aeroespacial
+        </h2>
+        <p class="dr-hero__subtitle">
+            Simulador de navegación inercial y evasión de terreno. Utiliza <strong>Interpolación por Splines</strong> para planificar el vuelo y <strong>Regla de Simpson</strong> para la telemetría en tiempo real sin GPS.
+        </p>
+        
+        <!-- Status Bar -->
+        <div class="dr-status-bar">
+            <div class="dr-status-item">
+                <span class="dr-led dr-led--idle" id="led-mapa"></span>
+                <span>Satélite / Terreno</span>
+            </div>
+            <div class="dr-status-item">
+                <span class="dr-led dr-led--idle" id="led-splines"></span>
+                <span>Motor Splines</span>
+            </div>
+            <div class="dr-status-item">
+                <span class="dr-led dr-led--idle" id="led-simpson"></span>
+                <span>Integradora Simpson</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ DASHBOARD 2 COLUMNAS ═══════════════════ -->
+    <div class="dr-dashboard">
+
+        <!-- ─── COLUMNA IZQUIERDA: COMANDO Y MAPA ─── -->
+        <div class="dr-card dr-card--left" id="panel-mapa">
+            <div class="dr-card__header">
+                <div class="dr-card__header-icon">
+                    <i class="ph-bold ph-crosshair"></i>
+                </div>
+                Centro de Comando (Waypoints)
+            </div>
+            <p class="dr-card__desc">
+                Haz clic en el mapa para marcar el <strong>Punto de Salida</strong> y luego el <strong>Punto de Entrega</strong>.
+            </p>
+
+            <div class="dr-map-wrapper">
+                <div id="map" class="dr-map"></div>
+                
+                <!-- Botón de ubicación actual -->
+                <button class="dr-btn-icon" id="btn-ubicacion" title="Ir a mi ubicación actual" style="position: absolute; top: 10px; right: 10px; z-index: 1000; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); border: 1px solid rgba(6,182,212,0.3); border-radius: 8px; width: 40px; height: 40px; justify-content: center;">
+                    <i class="ph-bold ph-navigation-arrow"></i>
+                </button>
+                
+                <div class="dr-coords-overlay">
+                    <div class="dr-coord-chip" id="chip-salida">
+                        <span class="dr-coord-chip__label">Salida A</span>
+                        <span class="dr-coord-chip__value" id="val-salida">Esperando...</span>
+                    </div>
+                    <div class="dr-coord-chip" id="chip-entrega">
+                        <span class="dr-coord-chip__label">Entrega B</span>
+                        <span class="dr-coord-chip__value" id="val-entrega">Esperando...</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="dr-btn-action dr-btn-action--idle" id="btn-simular" disabled>
+                <i class="ph-bold ph-rocket-launch"></i>
+                <span id="btn-simular-text">Generar Vuelo Autónomo</span>
+            </button>
+        </div>
+
+        <!-- ─── COLUMNA DERECHA: SIMULADOR 3D Y TELEMETRÍA ─── -->
+        <div class="dr-card dr-card--right" id="panel-resultados">
+            <div class="dr-card__header">
+                <div class="dr-card__header-icon">
+                    <i class="ph-bold ph-cube"></i>
+                </div>
+                Simulador Inercial 3D
+            </div>
+
+            <!-- Canvas 3D de Three.js -->
+            <div class="dr-3d-wrapper">
+                <div id="canvas-3d-drones" class="dr-3d-canvas"></div>
+                
+                <div class="dr-3d-overlay">
+                    <div class="dr-3d-controls">
+                        <button class="dr-btn-icon" id="btn-animar" disabled title="Iniciar Vuelo Animado">
+                            <i class="ph-fill ph-play-circle"></i> Volar
+                        </button>
+                        <button class="dr-btn-icon" id="btn-reset" title="Reiniciar Cámara">
+                            <i class="ph-bold ph-arrows-out-simple"></i>
+                        </button>
+                    </div>
+                    <p><i class="ph-bold ph-mouse-left"></i> Rotar &nbsp;|&nbsp; <i class="ph-bold ph-arrows-out-cardinal"></i> Zoom</p>
+                </div>
+            </div>
+
+            <!-- Telemetría: Simpson Integration -->
+            <div class="dr-metrics-grid">
+                <div class="dr-metric">
+                    <div class="dr-metric__icon"><i class="ph-bold ph-gauge"></i></div>
+                    <div class="dr-metric__content">
+                        <span class="dr-metric__label">Velocidad (1era Integral)</span>
+                        <span class="dr-metric__value" id="val-velocidad">0.0 <span class="dr-metric__unit">m/s</span></span>
+                    </div>
+                </div>
+                <div class="dr-metric">
+                    <div class="dr-metric__icon"><i class="ph-bold ph-arrows-left-right"></i></div>
+                    <div class="dr-metric__content">
+                        <span class="dr-metric__label">Posición (2da Integral)</span>
+                        <span class="dr-metric__value" id="val-posicion">0.0 <span class="dr-metric__unit">m</span></span>
+                    </div>
+                </div>
+                <div class="dr-metric">
+                    <div class="dr-metric__icon"><i class="ph-bold ph-map-pin-line"></i></div>
+                    <div class="dr-metric__content">
+                        <span class="dr-metric__label">Distancia Real</span>
+                        <span class="dr-metric__value" id="val-dist-real">-- <span class="dr-metric__unit">m</span></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dr-chart-wrapper">
+                <canvas id="chart-telemetria"></canvas>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<!-- Modal Error -->
+<div id="modal-error" class="dr-modal-error">
+    <div class="dr-modal-content">
+        <i class="ph-bold ph-warning-circle"></i>
+        <h4 id="error-title">Error del Sistema</h4>
+        <p id="error-msg">Detalle del error</p>
+        <button onclick="document.getElementById('modal-error').classList.remove('active')">Entendido</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Three.js (Import Map y Módulos) -->
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+</script>
+<!-- Leaflet -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- Drone Logic -->
+<script type="module" src="{{ url_for('static', filename='js/drones_3d.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/drones.js') }}"></script>
+{% endblock %}
