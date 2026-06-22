@@ -294,6 +294,7 @@ def calcular_sis():
     tol_str = data.get('tol', '')
     iter_str = data.get('iter', '')
     modo_angulo = data.get('angulo', 'rad')
+    cfg = data.get('cfg', {})
     
     if not tol_str or not iter_str:
         return jsonify({'error': 'Llene Tolerancia y Máximo de Iteraciones.'})
@@ -305,7 +306,7 @@ def calcular_sis():
         return jsonify({'error': 'Tolerancia o Iteraciones inválidas.'})
         
     try:
-        res = resolver_sistema_no_lineal(n, funciones_txt, valores_x, tol, max_iter, modo_angulo)
+        res = resolver_sistema_no_lineal(n, funciones_txt, valores_x, tol, max_iter, modo_angulo, cfg)
         if "error" in res:
             return jsonify({'error': res["error"], 'consola': "\n".join(res.get("consola", []))})
             

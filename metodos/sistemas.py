@@ -2,11 +2,13 @@ import sympy as sp
 import numpy as np
 from metodos.utils import parse_ecuacion
 
-def resolver_sistema_no_lineal(n, funciones_txt, valores_x, tol, max_iter, modo_angulo='rad'):
+def resolver_sistema_no_lineal(n, funciones_txt, valores_x, tol, max_iter, modo_angulo='rad', cfg=None):
     """
     Resuelve un sistema de n ecuaciones no lineales usando el método de Newton-Raphson.
     Optimizado para usar lambdify con matrices de SymPy para mayor velocidad.
     """
+    if cfg is None: cfg = {}
+    error_mode = cfg.get('nl_error_mode', 'absoluto')
     try:
         X = np.array([float(x) for x in valores_x], dtype=float)
     except (ValueError, TypeError):
@@ -105,8 +107,12 @@ def resolver_sistema_no_lineal(n, funciones_txt, valores_x, tol, max_iter, modo_
 
         X_nuevo = X - delta_X
         
-        # Calcular error como la norma infinita de la diferencia
-        error = np.max(np.abs(delta_X))
+        # Calcular error
+        if error_mode == 'relativo':
+            denom = np.where(X_nuevo == 0, 1e-15, X_nuevo)
+            error = np.max(np.abs(delta_X / denom)) * 100.0
+        else:
+            error = np.max(np.abs(delta_X))
         
         X = X_nuevo
         iteracion += 1
