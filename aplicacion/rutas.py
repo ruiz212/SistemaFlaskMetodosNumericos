@@ -35,6 +35,7 @@ def api_simular():
         "curva_real": energia["curva_real"],
         "energia_ideal": energia["energia_ideal"],
         "energia_real": energia["energia_real"],
+        "energia_real_romberg": energia.get("energia_real_romberg", 0),
         "energia_perdida": energia["energia_perdida"],
         "angulo_optimo": optimizacion["angulo"],
         "max_radiacion": max_rad

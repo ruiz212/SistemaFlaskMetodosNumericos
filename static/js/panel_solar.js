@@ -141,8 +141,27 @@ async function simularPanel() {
         // Show results with animated counters
         showSkeletons(false);
         animateValue('res-angulo', 0, parseFloat(data.angulo_optimo), 900, '°');
-        // Fix NaN bug: Usar energia_real
         animateValue('res-energia', 0, parseFloat(data.energia_real), 1100, ' Wh');
+        animateValue('res-energia-romberg', 0, parseFloat(data.energia_real_romberg), 1100, ' Wh');
+
+        // Calcular e inyectar impacto económico
+        const eReal = parseFloat(data.energia_real);
+        const eRomberg = parseFloat(data.energia_real_romberg);
+        const diffWh = Math.abs(eRomberg - eReal);
+        
+        // Tarifa residencial Nicaragua = C$ 6.47 / kWh
+        const tarifaNicaragua = 6.47;
+        const diffKWh = diffWh / 1000;
+        const costoDiario = diffKWh * tarifaNicaragua;
+        const costoAnual = costoDiario * 365;
+        
+        const impactCard = document.getElementById('impact-card');
+        if (impactCard) {
+            impactCard.style.display = 'block';
+            animateValue('impact-wh', 0, diffWh, 1200, '');
+            animateValue('impact-daily', 0, costoDiario, 1200, '', 'C$ ');
+            animateValue('impact-yearly', 0, costoAnual, 1200, '', 'C$ ');
+        }
 
         // Draw chart with two curves
         dibujarGrafica(data.clima, data.curva_real, data.energia_perdida);
@@ -255,7 +274,7 @@ function setLed(ledId, state) {
 // ANIMATED VALUE COUNTER
 // ═══════════════════════════════════════════════════════════════════════════
 
-function animateValue(elementId, start, end, duration, suffix) {
+function animateValue(elementId, start, end, duration, suffix = '', prefix = '') {
     const el = document.getElementById(elementId);
     if (!el) return;
 
@@ -263,7 +282,7 @@ function animateValue(elementId, start, end, duration, suffix) {
     el.innerHTML = '';
 
     const startTime = performance.now();
-    const isDecimal = end % 1 !== 0;
+    const isDecimal = end % 1 !== 0 || prefix === 'C$ ';
 
     function update(currentTime) {
         const elapsed = currentTime - startTime;
@@ -273,7 +292,7 @@ function animateValue(elementId, start, end, duration, suffix) {
         const eased = 1 - Math.pow(1 - progress, 3);
         const currentVal = start + (end - start) * eased;
 
-        el.textContent = (isDecimal ? currentVal.toFixed(2) : Math.round(currentVal)) + suffix;
+        el.textContent = prefix + (isDecimal ? currentVal.toFixed(2) : Math.round(currentVal)) + suffix;
 
         if (progress < 1) {
             requestAnimationFrame(update);
@@ -290,10 +309,12 @@ function animateValue(elementId, start, end, duration, suffix) {
 function showSkeletons(show) {
     const anguloVal = document.getElementById('res-angulo');
     const energiaVal = document.getElementById('res-energia');
+    const energiaRombergVal = document.getElementById('res-energia-romberg');
 
     if (show) {
         anguloVal.innerHTML = '<div class="ps-metric__value--skeleton"></div>';
         energiaVal.innerHTML = '<div class="ps-metric__value--skeleton"></div>';
+        if (energiaRombergVal) energiaRombergVal.innerHTML = '<div class="ps-metric__value--skeleton"></div>';
     }
 }
 

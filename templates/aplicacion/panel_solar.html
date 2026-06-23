@@ -118,16 +118,28 @@
                     <div class="ps-metric__method">Optimizado con Newton-Raphson</div>
                 </div>
 
-                <!-- Energía Total (Integración) -->
+                <!-- Energía Total (Integración Trapecio) -->
                 <div class="ps-metric ps-metric--emerald" id="metric-energia">
                     <div class="ps-metric__icon">
                         <i class="ph-fill ph-lightning"></i>
                     </div>
-                    <div class="ps-metric__label">Energía Total (24 Hrs)</div>
+                    <div class="ps-metric__label">Energía Total (Trapecio)</div>
                     <div class="ps-metric__value" id="res-energia">
                         <span class="ps-waiting-badge">Esperando simulación</span>
                     </div>
-                    <div class="ps-metric__method">Área bajo la curva (Integración Trapecio)</div>
+                    <div class="ps-metric__method">Integración Trapecio (Simple)</div>
+                </div>
+
+                <!-- Energía Total (Integración Romberg) -->
+                <div class="ps-metric ps-metric--cyan" id="metric-energia-romberg">
+                    <div class="ps-metric__icon">
+                        <i class="ph-fill ph-lightning"></i>
+                    </div>
+                    <div class="ps-metric__label">Energía Total (Romberg)</div>
+                    <div class="ps-metric__value" id="res-energia-romberg">
+                        <span class="ps-waiting-badge">Esperando simulación</span>
+                    </div>
+                    <div class="ps-metric__method">Integración Romberg (Alta Precisión)</div>
                 </div>
 
                 <!-- Endpoint IoT -->
@@ -143,6 +155,30 @@
                         </div>
                     </div>
                     <i class="ph-bold ph-copy ps-iot-card__copy-icon"></i>
+                </div>
+                
+                <!-- Impacto Económico -->
+                <div class="ps-impact-card" id="impact-card" style="display: none; grid-column: 1 / -1; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 12px; padding: 16px;">
+                    <h4 style="color: #e2e8f0; margin-top: 0; margin-bottom: 12px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                        <i class="ph-fill ph-money" style="color: #10b981; font-size: 1.2rem;"></i> Impacto Financiero del Error
+                    </h4>
+                    <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 12px; line-height: 1.4;">
+                        La diferencia numérica entre el Trapecio y Romberg es de <strong id="impact-wh" style="color: #f8fafc;">0</strong> <strong>Wh por día</strong>.
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div style="background: rgba(15, 23, 42, 0.5); padding: 10px; border-radius: 8px;">
+                            <div style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Desviación Diaria</div>
+                            <div style="font-size: 1.1rem; color: #ef4444; font-weight: 600;" id="impact-daily">C$ 0.00</div>
+                        </div>
+                        <div style="background: rgba(15, 23, 42, 0.5); padding: 10px; border-radius: 8px;">
+                            <div style="font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Desviación Anualizada</div>
+                            <div style="font-size: 1.1rem; color: #ef4444; font-weight: 600;" id="impact-yearly">C$ 0.00</div>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.75rem; color: #64748b; margin-top: 12px; margin-bottom: 0; line-height: 1.3;">
+                        * Basado en la tarifa residencial de Nicaragua (<strong>C$ 6.47 / kWh</strong>). En un parque solar a escala, 
+                        la imprecisión de los métodos numéricos se traduce directamente en proyecciones falsas o pérdidas de dinero real.
+                    </p>
                 </div>
             </div>
 
