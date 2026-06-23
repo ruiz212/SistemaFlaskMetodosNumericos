@@ -141,6 +141,17 @@ async function simularPanel() {
         // Show results with animated counters
         showSkeletons(false);
         animateValue('res-angulo', 0, parseFloat(data.angulo_optimo), 900, '°');
+        
+        const azimutVal = document.getElementById('res-azimut');
+        if (azimutVal) {
+            azimutVal.style.opacity = 0;
+            setTimeout(() => {
+                azimutVal.textContent = data.azimut;
+                azimutVal.style.opacity = 1;
+                azimutVal.style.transition = "opacity 0.4s ease-in";
+            }, 300);
+        }
+
         animateValue('res-energia', 0, parseFloat(data.energia_real), 1100, ' Wh');
         animateValue('res-energia-romberg', 0, parseFloat(data.energia_real_romberg), 1100, ' Wh');
 
@@ -308,11 +319,13 @@ function animateValue(elementId, start, end, duration, suffix = '', prefix = '')
 
 function showSkeletons(show) {
     const anguloVal = document.getElementById('res-angulo');
+    const azimutVal = document.getElementById('res-azimut');
     const energiaVal = document.getElementById('res-energia');
     const energiaRombergVal = document.getElementById('res-energia-romberg');
 
     if (show) {
         anguloVal.innerHTML = '<div class="ps-metric__value--skeleton"></div>';
+        if (azimutVal) azimutVal.innerHTML = '<div class="ps-metric__value--skeleton"></div>';
         energiaVal.innerHTML = '<div class="ps-metric__value--skeleton"></div>';
         if (energiaRombergVal) energiaRombergVal.innerHTML = '<div class="ps-metric__value--skeleton"></div>';
     }

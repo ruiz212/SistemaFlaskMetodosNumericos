@@ -26,6 +26,14 @@ def api_simular():
     max_rad = clima["max_radiacion"]
     optimizacion = calcular_angulo_optimo(lat, max_rad)
     
+    # 4. Calcular Azimut basado en Hemisferio
+    if lat > 0:
+        azimut = "Sur (180°)"
+    elif lat < 0:
+        azimut = "Norte (0°)"
+    else:
+        azimut = "Cenit (0°)"
+    
     if "error" in optimizacion:
         return jsonify({"success": False, "error": optimizacion["error"]})
         
@@ -38,8 +46,10 @@ def api_simular():
         "energia_real_romberg": energia.get("energia_real_romberg", 0),
         "energia_perdida": energia["energia_perdida"],
         "angulo_optimo": optimizacion["angulo"],
+        "azimut": azimut,
         "max_radiacion": max_rad
     })
+
 
 # Ruta IoT que un ESP32/Arduino leería
 @aplicacion_bp.route('/api/iot/angulo_actual', methods=['GET'])
@@ -54,7 +64,14 @@ def iot_angulo():
     opt = calcular_angulo_optimo(lat, max_rad)
     angulo = opt.get("angulo", 30.0) if "error" not in opt else 30.0
     
-    return jsonify({"angulo_servo": angulo})
+    if lat > 0:
+        azimut = "Sur (180°)"
+    elif lat < 0:
+        azimut = "Norte (0°)"
+    else:
+        azimut = "Cenit (0°)"
+        
+    return jsonify({"angulo_servo": angulo, "azimut": azimut})
 
 # ==========================================
 # RUTAS DRONES AUTÓNOMOS (AEROESPACIAL)
