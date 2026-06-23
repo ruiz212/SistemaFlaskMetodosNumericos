@@ -638,4 +638,10 @@ def calcular_interpolacion():
     return jsonify({'error': 'Método no soportado'})
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    import sys
+    if '--debug' in sys.argv:
+        app.run(debug=True, port=5000)
+    else:
+        from waitress import serve
+        print("Iniciando servidor multihilo (Waitress) en http://localhost:5000")
+        serve(app, host='0.0.0.0', port=5000, threads=8)
