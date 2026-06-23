@@ -23,8 +23,8 @@ def punto_fijo(x0, tol, f, force=False, g_prima=None, cfg=None):
             error_str = f"{err_val:.15f}"
         else:
             if x_nuevo != 0:
-                err_val = abs((x_nuevo - x_actual) / x_nuevo) * 100.0
-                error_str = f"{err_val:.15f}%"
+                err_val = abs((x_nuevo - x_actual) / x_nuevo)
+                error_str = f"{err_val * 100.0:.15f}%"
             else:
                 err_val = 0.0
                 error_str = "0.000000%"

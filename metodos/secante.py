@@ -54,14 +54,14 @@ def secante(x0, x1, tol, f, cfg=None):
         # Error evaluation
         if error_mode == 'absoluto':
             err_val = abs(c_nuevo - c_actual)
-            error_str = f"{err_val:.15f}"
+            error_str = f"{err_val:.15f}" if iteracion > 2 else "---"
         else:
             if c_nuevo != 0:
-                err_val = abs((c_nuevo - c_actual) / c_nuevo) * 100.0
-                error_str = f"{err_val:.15f}%"
+                err_val = abs((c_nuevo - c_actual) / c_nuevo)
+                error_str = f"{err_val * 100.0:.15f}%" if iteracion > 2 else "---"
             else:
                 err_val = 0.0
-                error_str = "0.000000%"
+                error_str = "0.000000%" if iteracion > 2 else "---"
         
         resultados.append({
             'iter': iteracion,

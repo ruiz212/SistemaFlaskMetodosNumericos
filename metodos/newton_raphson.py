@@ -29,8 +29,8 @@ def newton_raphson(ci, tol, f, df, cfg=None):
             error_str = f"{err_val:.15f}"
         else:
             if ci_mas_1 != 0:
-                err_val = abs((ci_mas_1 - ci) / ci_mas_1) * 100.0
-                error_str = f"{err_val:.15f}%"
+                err_val = abs((ci_mas_1 - ci) / ci_mas_1)
+                error_str = f"{err_val * 100.0:.15f}%"
             else:
                 err_val = 0.0
                 error_str = "0.000000%"

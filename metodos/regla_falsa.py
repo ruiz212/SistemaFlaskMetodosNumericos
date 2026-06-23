@@ -37,8 +37,8 @@ def regla_falsa(a, b, tol, f, cfg=None):
                 error_str = f"{err_val:.15f}"
             else:
                 if c_actual != 0:
-                    err_val = abs((c_actual - c_anterior) / c_actual) * 100.0
-                    error_str = f"{err_val:.15f}%"
+                    err_val = abs((c_actual - c_anterior) / c_actual)
+                    error_str = f"{err_val * 100.0:.15f}%"
                 else:
                     err_val = 0.0
                     error_str = "0.000000%"
